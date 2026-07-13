@@ -54,9 +54,6 @@
     mask-image: linear-gradient(to top, black 0%, transparent 45%);
   }
 
-  #slideTitle, #slideDesc { transition: opacity .35s ease, filter .35s ease, transform .35s ease; }
-  .slide-out { opacity: 0 !important; filter: blur(8px); transform: translateY(8px); }
-
   .card { background: #0e1017; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; }
   .btn-gold { background: linear-gradient(120deg, #f7931a 0%, #f4b728 65%); color: #14100a; font-weight: 600; }
   .btn-gold:hover { filter: brightness(1.06); }
@@ -66,11 +63,24 @@
   }
   input.field:focus { border-color: rgba(244,183,40,0.5); }
 
-  /* hamburger */
-  .menu-line { display: block; width: 18px; height: 1.5px; background: currentColor; margin: 4px 0; transition: transform .3s ease, opacity .3s ease; }
-  .menu-btn.is-open .menu-line:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
-  .menu-btn.is-open .menu-line:nth-child(2) { opacity: 0; }
-  .menu-btn.is-open .menu-line:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+  /* feature sections */
+  .eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600; }
+  .glow-orb {
+    position: absolute; border-radius: 9999px; filter: blur(90px); pointer-events: none;
+  }
+  .step-num {
+    width: 30px; height: 30px; border-radius: 9999px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600;
+  }
+  .paper-chip {
+    background: #ffffff; border: 1px solid rgba(20,16,10,0.12); border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(20,16,10,0.10);
+  }
+  .wall-quote {
+    background: #0e1017; border: 1px solid rgba(255,255,255,0.07); border-radius: 16px;
+    border-left: 2px solid rgba(244,183,40,0.5);
+  }
 </style>
 </head>
 <body class="text-white">
@@ -90,69 +100,145 @@
         <span class="font-display text-lg tracking-tight leading-none" style="font-weight:600;">portal</span>
       </a>
 
-      <div class="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-        <a href="#" data-slide="0" class="text-sm hover:text-gray-300 transition-colors animate-blur-fade-up" style="animation-delay:100ms;">Login</a>
-        <a href="#" data-slide="1" class="text-sm hover:text-gray-300 transition-colors animate-blur-fade-up" style="animation-delay:150ms;">Gates</a>
-        <a href="#" data-slide="2" class="text-sm hover:text-gray-300 transition-colors animate-blur-fade-up" style="animation-delay:200ms;">Paylinks</a>
-        <a href="#demo" class="text-sm hover:text-gray-300 transition-colors animate-blur-fade-up" style="animation-delay:250ms;">Live demo</a>
-        <a href="/docs.html" class="text-sm hover:text-gray-300 transition-colors animate-blur-fade-up" style="animation-delay:300ms;">Docs</a>
-        <a href="/dashboard.html" class="text-sm hover:text-gray-300 transition-colors animate-blur-fade-up" style="animation-delay:320ms;">Dashboard</a>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <a href="https://github.com/IamHarrie-Labs/portal" target="_blank" rel="noopener"
-           class="hidden sm:flex liquid-glass rounded-full items-center px-5 py-2 text-sm animate-blur-fade-up" style="animation-delay:350ms;">
-          GitHub
-        </a>
-        <button id="menuBtn" class="menu-btn lg:hidden liquid-glass rounded-full w-10 h-10 flex flex-col items-center justify-center animate-blur-fade-up" style="animation-delay:350ms;" aria-label="Toggle menu">
-          <span class="menu-line"></span><span class="menu-line"></span><span class="menu-line"></span>
-        </button>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a href="/docs.html" class="text-sm px-4 py-2 hover:text-gray-300 transition-colors animate-blur-fade-up" style="animation-delay:150ms;">Docs</a>
+        <a href="/dashboard.html" class="liquid-glass rounded-full px-5 py-2 text-sm animate-blur-fade-up" style="animation-delay:250ms;">Dashboard</a>
       </div>
     </nav>
 
-    <!-- MOBILE MENU -->
-    <div id="mobileMenu" class="lg:hidden absolute left-0 right-0 top-[72px] -translate-y-4 opacity-0 pointer-events-none transition-all duration-500 ease-out border-t border-b border-white/10 shadow-2xl" style="z-index:40; background: rgba(14,16,23,0.96);">
-      <div class="flex flex-col p-4">
-        <a href="#" data-slide="0" class="py-3 px-3 rounded-lg hover:bg-white/5 transition-all">Login</a>
-        <a href="#" data-slide="1" class="py-3 px-3 rounded-lg hover:bg-white/5 transition-all">Gates</a>
-        <a href="#" data-slide="2" class="py-3 px-3 rounded-lg hover:bg-white/5 transition-all">Paylinks</a>
-        <a href="#demo" class="py-3 px-3 rounded-lg hover:bg-white/5 transition-all">Live demo</a>
-        <a href="/docs.html" class="py-3 px-3 rounded-lg hover:bg-white/5 transition-all">Docs</a>
-        <a href="/dashboard.html" class="py-3 px-3 rounded-lg hover:bg-white/5 transition-all">Dashboard</a>
-        <a href="https://github.com/IamHarrie-Labs/portal" target="_blank" rel="noopener" class="py-3 px-3 rounded-lg hover:bg-white/5 transition-all">GitHub</a>
-      </div>
-    </div>
-
     <!-- HERO CONTENT -->
     <div class="flex-1 flex flex-col justify-end px-4 sm:px-6 md:px-12 pb-8 md:pb-16">
-      <div class="flex flex-col md:flex-row items-end gap-8">
-        <div class="flex-1">
-          <h1 id="slideTitle" class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-medium mb-4 md:mb-6 animate-blur-fade-up" style="letter-spacing:-0.04em; animation-delay:300ms;">Step Through. Stay Private.</h1>
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-medium mb-4 md:mb-6 animate-blur-fade-up" style="letter-spacing:-0.04em; animation-delay:300ms;">Step Through. Stay Private.</h1>
 
-          <p id="slideDesc" class="text-base sm:text-lg md:text-xl text-gray-400 mb-6 md:mb-12 max-w-2xl animate-blur-fade-up" style="animation-delay:450ms;">
-            Sign in, gate content, and get paid, all with one shielded transaction. No passwords, no identity, no middlemen.
-          </p>
+        <p class="text-base sm:text-lg md:text-xl text-gray-400 mb-6 md:mb-12 max-w-2xl animate-blur-fade-up" style="animation-delay:450ms;">
+          Sign in, gate content, and get paid, all with one shielded Zcash transaction. No passwords, no identity, no middlemen.
+        </p>
 
-          <div class="flex flex-wrap gap-3 sm:gap-4">
-            <button id="primaryCta" class="btn-gold rounded-full px-6 sm:px-8 py-2.5 sm:py-3 transition-all animate-blur-fade-up" style="animation-delay:600ms;">
-              <span id="primaryCtaLabel">Sign in with Zcash</span>
-            </button>
-            <a href="/docs.html" class="liquid-glass rounded-full font-medium px-6 sm:px-8 py-2.5 sm:py-3 flex items-center animate-blur-fade-up" style="animation-delay:700ms;">
-              Read the docs
-            </a>
-          </div>
-        </div>
-
-        <div class="flex md:w-auto gap-3 self-start md:self-end">
-          <button id="prevBtn" class="liquid-glass rounded-full w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center animate-blur-fade-up" style="animation-delay:800ms;" aria-label="Previous">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button id="nextBtn" class="liquid-glass rounded-full w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center animate-blur-fade-up" style="animation-delay:900ms;" aria-label="Next">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
+        <div class="flex flex-wrap gap-3 sm:gap-4">
+          <a href="#demo" class="btn-gold rounded-full px-6 sm:px-8 py-2.5 sm:py-3 transition-all animate-blur-fade-up inline-flex items-center" style="animation-delay:600ms;">
+            Open Portal
+          </a>
+          <a href="/docs.html" class="liquid-glass rounded-full font-medium px-6 sm:px-8 py-2.5 sm:py-3 flex items-center animate-blur-fade-up" style="animation-delay:700ms;">
+            Read the docs
+          </a>
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ============ LOGIN. dark room, gold glow ============ -->
+<section class="relative py-24 md:py-32 px-4 sm:px-6 md:px-12 overflow-hidden" style="background:#060709;">
+  <div class="glow-orb" style="width:480px; height:480px; background:rgba(244,183,40,0.10); top:-120px; right:-140px;"></div>
+  <svg class="absolute pointer-events-none" style="right:4%; bottom:-40px; width:340px; opacity:0.05;" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728"/></svg>
+
+  <div class="max-w-6xl mx-auto relative">
+    <div class="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <div class="reveal">
+        <div class="eyebrow text-gold mb-4">Login</div>
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-medium mb-6" style="letter-spacing:-0.03em;">
+          Sign in without <span class="serif-accent text-gold">an account.</span>
+        </h2>
+        <p class="text-gray-400 leading-relaxed mb-4">No email. No password. No form to fill. Your wallet sends a zero-value shielded transaction carrying a one-time code, Portal watches it arrive on the Zcash mainnet, and you are in.</p>
+        <p class="text-gray-400 leading-relaxed">The site you signed into learns exactly one thing: that you showed up. Not who you are, not where you came from, not what else you have paid for.</p>
+      </div>
+      <div class="reveal">
+        <div class="space-y-4">
+          <div class="flex items-center gap-4 card p-5">
+            <div class="step-num" style="background:rgba(244,183,40,0.12); color:#f4b728;">1</div>
+            <p class="text-sm text-gray-300">A one-time code appears on screen, as a QR or a tap-to-pay link.</p>
+          </div>
+          <div class="flex items-center gap-4 card p-5">
+            <div class="step-num" style="background:rgba(244,183,40,0.12); color:#f4b728;">2</div>
+            <p class="text-sm text-gray-300">Your wallet sends it back inside an encrypted memo. It costs nothing beyond the network fee.</p>
+          </div>
+          <div class="flex items-center gap-4 card p-5">
+            <div class="step-num" style="background:linear-gradient(120deg,#f7931a,#f4b728); color:#14100a;">3</div>
+            <p class="text-sm text-gray-300">Portal sees it land on mainnet, usually within seconds. Signed in.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GATES. the gold room ============ -->
+<section class="relative py-24 md:py-32 px-4 sm:px-6 md:px-12 overflow-hidden" style="background:linear-gradient(135deg, #f7931a 0%, #f4b728 60%, #f8c64a 100%);">
+  <svg class="absolute pointer-events-none" style="left:-60px; top:-80px; width:420px; opacity:0.08;" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#14100a"/></svg>
+
+  <div class="max-w-6xl mx-auto relative">
+    <div class="max-w-3xl reveal">
+      <div class="eyebrow mb-4" style="color:rgba(20,16,10,0.55);">Gates</div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-medium mb-6 text-black" style="letter-spacing:-0.03em;">
+        Put a price <span class="serif-accent">on the door.</span>
+      </h2>
+      <p class="leading-relaxed mb-4" style="color:rgba(20,16,10,0.75);">A Gate is a login with a price. Set an amount, and the exact same one-step flow becomes a paywall, a membership, a ticket booth. No billing system, no checkout form, no card processor taking a cut.</p>
+      <p class="leading-relaxed" style="color:rgba(20,16,10,0.75);">The price lives on your server, never in the visitor's browser, so nobody can talk it down. Underpay and the door stays shut, with an honest message saying exactly why.</p>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mt-10 reveal">
+      <span class="rounded-full px-5 py-2 text-sm font-medium" style="background:rgba(20,16,10,0.9); color:#f4b728;">Paywalls</span>
+      <span class="rounded-full px-5 py-2 text-sm font-medium" style="background:rgba(20,16,10,0.9); color:#f4b728;">Memberships</span>
+      <span class="rounded-full px-5 py-2 text-sm font-medium" style="background:rgba(20,16,10,0.9); color:#f4b728;">Pay-per-article</span>
+      <span class="rounded-full px-5 py-2 text-sm font-medium" style="background:rgba(20,16,10,0.9); color:#f4b728;">Early access</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PAYLINKS. the paper room ============ -->
+<section class="relative py-24 md:py-32 px-4 sm:px-6 md:px-12 overflow-hidden" style="background:#f4f1ea;">
+  <div class="max-w-6xl mx-auto relative">
+    <div class="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <div class="reveal">
+        <div class="eyebrow mb-4" style="color:#b07d10;">Paylinks</div>
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-medium mb-6" style="letter-spacing:-0.03em; color:#14100a;">
+          Get paid <span class="serif-accent" style="color:#b07d10;">with a link.</span>
+        </h2>
+        <p class="leading-relaxed mb-4" style="color:rgba(20,16,10,0.65);">Choose an amount, add a label, share the link. Anyone who opens it can pay you straight from their wallet, and Portal confirms each payment live on mainnet.</p>
+        <p class="leading-relaxed" style="color:rgba(20,16,10,0.65);">A tip jar, an invoice, a buy-me-a-coffee button. Many people can pay the same link, each detected on its own, and a running count keeps score.</p>
+      </div>
+      <div class="reveal">
+        <div class="paper-chip p-6 max-w-sm mx-auto">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-semibold uppercase tracking-widest" style="color:#b07d10;">Payment request</span>
+            <svg width="18" height="21" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728" stroke="#14100a" stroke-width="0.6"/></svg>
+          </div>
+          <p class="font-display text-2xl font-semibold mb-1" style="color:#14100a;">Coffee tip</p>
+          <p class="text-sm mb-5" style="color:rgba(20,16,10,0.55);">0.001 ZEC · shielded</p>
+          <div class="rounded-xl px-4 py-3 text-xs font-mono break-all" style="background:#f4f1ea; color:rgba(20,16,10,0.7); border:1px solid rgba(20,16,10,0.1);">portal.example/pay/nqzg9kdw</div>
+          <p class="text-xs mt-4" style="color:rgba(20,16,10,0.45);">3 payments received · all detected on mainnet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SHIELDED WALL. the quiet dark room ============ -->
+<section class="relative py-24 md:py-32 px-4 sm:px-6 md:px-12 overflow-hidden" style="background:#0a0910;">
+  <div class="glow-orb" style="width:420px; height:420px; background:rgba(124,92,255,0.08); bottom:-160px; left:-120px;"></div>
+
+  <div class="max-w-6xl mx-auto relative">
+    <div class="max-w-3xl reveal mb-12">
+      <div class="eyebrow text-gold mb-4">The Shielded Wall</div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-medium mb-6" style="letter-spacing:-0.03em;">
+        Proof, written <span class="serif-accent text-gold">through the chain.</span>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-4">Add a few words after the code in a login memo and they appear on the Wall, published from inside an encrypted transaction. No account posted it. No IP address sent it.</p>
+      <p class="text-gray-400 leading-relaxed">Look the transaction up on a public block explorer and you will find nothing: sender, receiver, amount, and message are all sealed. That silence is the product.</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4 max-w-3xl reveal">
+      <div class="wall-quote p-5">
+        <p class="text-sm text-gray-300 serif-accent text-base">"this message travelled through the zcash mainnet to get here"</p>
+        <p class="text-xs text-gray-600 font-mono mt-2">shielded tx · sender unknown</p>
+      </div>
+      <div class="wall-quote p-5">
+        <p class="text-sm text-gray-300 serif-accent text-base">"nobody knows I wrote this. that's the point."</p>
+        <p class="text-xs text-gray-600 font-mono mt-2">shielded tx · sender unknown</p>
+      </div>
+    </div>
+    <p class="text-sm text-gray-500 mt-8 reveal">The live Wall is in the demo below. Whatever you write travels the same road.</p>
   </div>
 </section>
 
@@ -238,10 +324,6 @@
         <div id="wall" class="space-y-3 max-h-40 overflow-y-auto"></div>
       </div>
     </div>
-
-    <div class="text-center mt-14 reveal">
-      <a href="/docs.html" class="text-sm text-gray-400 hover:text-white transition-colors">Want the full picture? Read the documentation →</a>
-    </div>
   </div>
 </section>
 
@@ -256,8 +338,8 @@
   </div>
 </section>
 
-<footer class="px-4 sm:px-6 md:px-12 py-10 border-t border-white/5" style="background:#060709;">
-  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+<footer class="px-4 sm:px-6 md:px-12 py-12 border-t border-white/5" style="background:#060709;">
+  <div class="max-w-6xl mx-auto flex flex-col items-center gap-5 text-center">
     <a href="#" class="flex items-end gap-2">
       <svg width="18" height="21" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728" stroke="#14100a" stroke-width="0.6"/></svg>
       <span class="font-display text-sm leading-none" style="font-weight:600;">portal</span>
@@ -265,91 +347,20 @@
     <div class="flex gap-6 text-sm text-gray-500">
       <a href="#demo" class="hover:text-gray-300">Demo</a>
       <a href="/docs.html" class="hover:text-gray-300">Docs</a>
+      <a href="/dashboard.html" class="hover:text-gray-300">Dashboard</a>
       <a href="https://github.com/IamHarrie-Labs/portal" target="_blank" rel="noopener" class="hover:text-gray-300">GitHub</a>
-      <a href="https://zechub.wiki/hackathon" target="_blank" rel="noopener" class="hover:text-gray-300">ZecHub</a>
     </div>
-    <p class="text-xs text-gray-600">© 2026 Portal · ZecHub Hackathon 3.0 · Zcash Login track</p>
+    <p class="text-xs text-gray-600">© 2026 Portal</p>
   </div>
 </footer>
 
-<script src="/sdk/portal.js"></script>
+<script src="/sdk/portal.js?v=3"></script>
 <script>
   // ---- scroll reveal ----
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
   }, { threshold: 0.15 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-
-  // ---- mobile menu ----
-  const menuBtn = document.getElementById('menuBtn');
-  const mobileMenu = document.getElementById('mobileMenu');
-  let menuOpen = false;
-  function toggleMenu(open) {
-    menuOpen = open;
-    menuBtn.classList.toggle('is-open', open);
-    mobileMenu.classList.toggle('-translate-y-4', !open);
-    mobileMenu.classList.toggle('opacity-0', !open);
-    mobileMenu.classList.toggle('pointer-events-none', !open);
-  }
-  menuBtn.addEventListener('click', () => toggleMenu(!menuOpen));
-  mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => toggleMenu(false)));
-
-  // ---- hero slides ----
-  const slides = [
-    {
-      title: 'Step Through. Stay Private.',
-      desc: "Sign in, gate content, and get paid, all with one shielded transaction. No passwords, no identity, no middlemen.",
-      ctaLabel: 'Sign in with Zcash',
-      action: () => doLogin(),
-    },
-    {
-      title: 'One Payment. Full Access.',
-      desc: "Gates use the exact same engine as Login, priced by the server. Pay to unlock, paywalls and memberships, in one step.",
-      ctaLabel: 'Unlock VIP Alpha',
-      action: () => doVip(),
-    },
-    {
-      title: 'Get Paid. Anywhere.',
-      desc: "Set an amount and a label, get a link. Anyone who opens it can pay you directly, detected live on mainnet, just like a login.",
-      ctaLabel: 'Create a Paylink',
-      action: () => { document.getElementById('demo').scrollIntoView({ behavior: 'smooth' }); setTimeout(() => document.getElementById('plAmount').focus(), 700); },
-    },
-  ];
-
-  let current = 0;
-  const titleEl = document.getElementById('slideTitle');
-  const descEl = document.getElementById('slideDesc');
-  const ctaBtn = document.getElementById('primaryCta');
-  const ctaLabel = document.getElementById('primaryCtaLabel');
-
-  function renderSlide(i, animate) {
-    const s = slides[i];
-    const apply = () => {
-      titleEl.textContent = s.title;
-      descEl.textContent = s.desc;
-      ctaLabel.textContent = s.ctaLabel;
-      [titleEl, descEl].forEach(el => el.classList.remove('slide-out'));
-    };
-    if (!animate) { apply(); return; }
-    [titleEl, descEl].forEach(el => el.classList.add('slide-out'));
-    setTimeout(apply, 200);
-  }
-
-  function goTo(i) {
-    current = ((i % slides.length) + slides.length) % slides.length;
-    renderSlide(current, true);
-  }
-  ctaBtn.addEventListener('click', () => slides[current].action());
-  document.getElementById('prevBtn').addEventListener('click', () => goTo(current - 1));
-  document.getElementById('nextBtn').addEventListener('click', () => goTo(current + 1));
-  document.querySelectorAll('[data-slide]').forEach(a => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      goTo(Number(a.dataset.slide));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  });
-  renderSlide(0, false);
 
   // ---- real end-to-end actions ----
   function showLoginDone(session) {

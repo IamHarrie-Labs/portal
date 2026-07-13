@@ -60,11 +60,11 @@
       <h1 class="text-3xl font-medium mb-2 text-center">Creator <span class="serif-accent text-gold">dashboard</span></h1>
       <p class="text-sm text-gray-500 text-center mb-8">Accept payments through this Portal instance under your own address. Gates, Paylinks, and webhooks, all yours.</p>
       <div class="card p-8 text-center">
-        <p class="text-sm text-gray-400 mb-6 leading-relaxed">No username, no password. Sign in the same way anyone signs into Portal &mdash; send a zero-value shielded memo from your own wallet. That proof of wallet ownership <span class="serif-accent text-gold">is</span> your account.</p>
+        <p class="text-sm text-gray-400 mb-6 leading-relaxed">No username, no password. Sign in the same way anyone signs into Portal: send a zero-value shielded memo from your own wallet. That proof of wallet ownership <span class="serif-accent text-gold">is</span> your account.</p>
         <button id="walletSignIn" class="btn-gold rounded-full px-6 py-3 text-sm w-full">Sign in with Zcash</button>
         <p id="authError" class="err-text hidden mt-4"></p>
-        <p class="text-xs text-gray-600 mt-5">First time signing in from this wallet? We mint you a receiving address on the spot &mdash; can take up to a minute.</p>
-        <p class="text-xs text-gray-600 mt-2"><strong class="text-gray-400">How it identifies you:</strong> include your own Zcash address in the memo after the code &mdash; type it in manually, or enable &ldquo;include reply address&rdquo; in Ywallet. Same address = same account, every time.</p>
+        <p class="text-xs text-gray-600 mt-5">First time signing in from this wallet? We mint you a receiving address on the spot. It can take up to a minute.</p>
+        <p class="text-xs text-gray-600 mt-2"><strong class="text-gray-400">How it identifies you:</strong> include your own Zcash address in the memo after the code. Type it in manually, or enable &ldquo;include reply address&rdquo; in Ywallet. Same address = same account, every time.</p>
       </div>
     </div>
   </section>
@@ -137,7 +137,7 @@
 
     <div class="card p-6 mt-8">
       <h2 class="text-base font-medium mb-2">Webhook</h2>
-      <p class="text-sm text-gray-500 mb-4">Get an HMAC-signed POST the moment a payment into one of your Gates or Paylinks is detected, and again once confirmed. Must be a public http(s) URL &mdash; localhost and private addresses are rejected.</p>
+      <p class="text-sm text-gray-500 mb-4">Get an HMAC-signed POST the moment a payment into one of your Gates or Paylinks is detected, and again once confirmed. Must be a public http(s) URL; localhost and private addresses are rejected.</p>
       <form id="webhookForm" class="flex flex-col sm:flex-row gap-2">
         <input class="field flex-1" id="webhookUrl" placeholder="https://yourapp.com/hooks/portal">
         <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm whitespace-nowrap">Save</button>
