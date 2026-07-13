@@ -68,6 +68,7 @@
         <a href="#gates">Gates</a>
         <a href="#paylinks">Paylinks</a>
         <a href="#wall">The Shielded Wall</a>
+        <a href="#creators">Creator accounts</a>
       </div>
       <div>
         <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Reference</p>
@@ -100,6 +101,7 @@
         <a href="#gates">Gates</a>
         <a href="#paylinks">Paylinks</a>
         <a href="#wall">The Shielded Wall</a>
+        <a href="#creators">Creator accounts</a>
         <a href="#api">HTTP API</a>
         <a href="#sdk">JavaScript SDK</a>
         <a href="#self-hosting">Self-hosting</a>
@@ -204,9 +206,36 @@ POST /paylinks   { <span class="tok-s">"amount"</span>: <span class="tok-s">"0.0
       <p>It exists to make the mechanism visible. When you watch a sentence appear on the Wall seconds after you hit send in your wallet, you understand exactly what Portal is doing under the hood.</p>
     </section>
 
+    <section id="creators" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Creator accounts</h2>
+      <p class="mb-4">Everything so far pays into the single wallet the operator configured with <code>PORTAL_ADDRESS</code>. Creator accounts let other people accept payments through the same running instance, each with their own receiving address, their own Gates, and their own Paylinks, without anyone running a second server or a second wallet.</p>
+      <p class="mb-4">The trick is diversified addresses: Zcash unified addresses let one wallet seed derive an unlimited number of receiving addresses that are unlinkable on-chain but all spendable by the same keys. Signing up mints one of these for the new creator. The existing wallet watcher already reports activity across every address the seed controls, so a creator's payments are detected the same way Login and Gates always were, just filed under a different account.</p>
+      <pre class="code-block p-5 mb-4"><code>POST /creators/register   { <span class="tok-s">"username"</span>: <span class="tok-s">"alice"</span>, <span class="tok-s">"password"</span>: <span class="tok-s">"…"</span> }
+<span class="tok-c">// → { "token": "eyJ…", "creator": { "id", "username", "address", … } }</span>
+
+POST /creators/login      { <span class="tok-s">"username"</span>: <span class="tok-s">"alice"</span>, <span class="tok-s">"password"</span>: <span class="tok-s">"…"</span> }
+GET  /creators/me         <span class="tok-c">// Authorization: Bearer &lt;token&gt; — profile, gates, paylinks, totals</span></code></pre>
+      <p class="mb-4">Creator tokens are a separate role from the session tokens Login and Gates issue, so one can never be used in place of the other.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Configurable multi-tier Gates</h3>
+      <p class="mb-4">Instead of the single hardcoded <code>gate:vip</code>, a signed-in creator can define as many priced tiers as they want.</p>
+      <pre class="code-block p-5 mb-4"><code>PUT    /creators/me/gates/:key   { <span class="tok-s">"amount"</span>: <span class="tok-s">"0.02"</span>, <span class="tok-s">"label"</span>: <span class="tok-s">"Premium"</span>, <span class="tok-s">"requireConfirmation"</span>: <span class="tok-k">false</span> }
+GET    /creators/me/gates
+DELETE /creators/me/gates/:key
+
+<span class="tok-c">// public — anyone paying into one of a creator's gates:</span>
+POST   /creators/:creatorId/gates/:key/challenge</code></pre>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Webhooks</h3>
+      <p class="mb-4">Polling <code>GET /auth/status/:id</code> works for a browser tab, but a backend integration usually wants a push. A creator can register one URL and get an HMAC-signed POST the moment a payment into one of their Gates or Paylinks is detected, and again once it's confirmed.</p>
+      <pre class="code-block p-5 mb-4"><code>PATCH /creators/me/webhook   { <span class="tok-s">"url"</span>: <span class="tok-s">"https://yourapp.com/hooks/portal"</span> }</code></pre>
+      <p class="mb-4">Each delivery carries an <code>x-portal-signature</code> header: hex-encoded HMAC-SHA256 of the raw JSON body, keyed with the creator's own webhook secret. Verify it before trusting the payload. Delivery retries up to three times with backoff and never blocks payment detection for other creators if an endpoint is slow or down. For safety, webhook URLs must resolve to a public address; localhost and private IP ranges are rejected so a creator's webhook can't be used to probe the server's own network.</p>
+      <p>Anonymous, no-login Paylinks and the built-in single-operator Login/Gate still work exactly as before. Creator accounts are additive.</p>
+    </section>
+
     <section id="api" class="mt-16 reveal">
       <h2 class="text-2xl font-medium mb-4 text-white">HTTP API</h2>
-      <p class="mb-6">Everything the SDK does happens through five endpoints. You can use them directly if you're building something the SDK doesn't cover. The two write endpoints that don't require an existing session, <code>POST /auth/challenge</code> and <code>POST /paylinks</code>, are rate-limited per IP so a single visitor can't flood your instance.</p>
+      <p class="mb-6">Everything the SDK does happens through five endpoints, plus the creator-account API above if you need multi-tenant. The write endpoints that don't require an existing session, <code>POST /auth/challenge</code>, <code>POST /paylinks</code>, and <code>POST /creators/register</code>, are rate-limited per IP so a single visitor can't flood your instance.</p>
 
       <h3 class="text-lg font-medium mb-2 text-white">Create a challenge</h3>
       <pre class="code-block p-5 mb-2"><code>POST /auth/challenge
@@ -281,11 +310,12 @@ PORTAL_ADDRESS=<span class="tok-s">u1yourshieldedaddress…</span> npm start
             <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_JWT_SECRET</td><td class="py-3 px-5">Signing key for session tokens. Random per boot if unset.</td></tr>
             <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_GATE_VIP_AMOUNT</td><td class="py-3 px-5">Price of the demo Gate in ZEC. Defaults to 0.05.</td></tr>
             <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_GATE_VIP_REQUIRE_CONFIRMATION</td><td class="py-3 px-5">Set to <code>1</code> to require a mined confirmation instead of accepting the Gate at 0-conf. Defaults to off.</td></tr>
-            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_DATA_DIR</td><td class="py-3 px-5">Where Paylinks and Shielded Wall posts are persisted to disk. Defaults to <code>server/data</code>.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_DATA_DIR</td><td class="py-3 px-5">Where Paylinks, Gates, creator accounts, and Shielded Wall posts are persisted to disk. Defaults to <code>server/data</code>.</td></tr>
             <tr><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_ZINGO_ARGS</td><td class="py-3 px-5">Override how the server launches zingo-cli, as a JSON array.</td></tr>
           </tbody>
         </table>
       </div>
+      <p class="mt-4 text-sm" style="color:#a7afbd;">Creator sign-up is capped at 5 accounts per IP per hour, and creator login at 20 attempts per IP per 15 minutes, on top of the challenge and Paylink limits above.</p>
     </section>
 
     <section id="privacy" class="mt-16 reveal">

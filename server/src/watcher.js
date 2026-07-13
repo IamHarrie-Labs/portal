@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { matchMemo } from './challenges.js';
-import { recordPayment } from './paylinks.js';
+import { recordPayment, getPaylink } from './paylinks.js';
+import { fireWebhook } from './webhooks.js';
 
 // Persistent zingo-cli session design — verified empirically (2026-07-10):
 //   * A session's startup sync does NOT keep following the chain; `messages`
@@ -180,16 +181,55 @@ function handleValueTransfers(transfers) {
             recordedPaylinkTxids.add(txid);
             recordPayment(matched.purpose.slice('paylink:'.length), { txid, valueZats: vt.value ?? 0 });
           }
+          notifyWebhook(matched, { txid, valueZats: vt.value ?? 0 });
         }
       }
     }
   }
 }
 
+// Route a matched challenge back to the creator it belongs to (if any) and
+// fire their webhook. Fires at most once per (txid, status) pair so a Gate
+// that goes mempool -> confirmed triggers two distinct events, not a flood.
+const webhookFiredKeys = new Set();
+function notifyWebhook(matched, { txid, valueZats }) {
+  if (!txid) return;
+  const key = `${txid}:${matched.status}`;
+  if (webhookFiredKeys.has(key)) return;
+  webhookFiredKeys.add(key);
+  let creatorId = null;
+  if (matched.purpose?.startsWith('cgate:')) {
+    creatorId = matched.purpose.split(':')[1];
+  } else if (matched.purpose?.startsWith('paylink:')) {
+    const link = getPaylink(matched.purpose.slice('paylink:'.length));
+    creatorId = link?.creatorId ?? null;
+  }
+  if (!creatorId) return;
+  fireWebhook(creatorId, {
+    type: matched.status === 'confirmed' ? 'payment.confirmed' : 'payment.detected',
+    data: { txid, code: matched.code, purpose: matched.purpose, valueZats },
+  });
+}
+
 /** Self-send a memo from the Portal wallet to itself (used by debug self-test). */
 export async function selfSendMemo(address, amountZats, memo) {
   const out = await runCommand(`quicksend ${address} ${amountZats} "${memo}"`, 120000);
   return out;
+}
+
+// Carve a fresh diversified unified address out of the SAME wallet seed —
+// used to give each creator account their own receiving address without
+// spinning up a separate wallet process. zingo-cli's `new_address oz`
+// replies with (verified live) either a single object or a one-element
+// array of objects shaped like { encoded_address: "u1...", ... }.
+export async function newAddress() {
+  const out = await runCommand('new_address oz', 60000);
+  const entry = Array.isArray(out) ? out[0] : out;
+  const address = entry?.encoded_address
+    ?? entry?.address
+    ?? (typeof entry === 'string' ? entry : null);
+  if (!address) throw new Error(`unexpected new_address response: ${JSON.stringify(out)}`);
+  return address;
 }
 
 export function startWatcher() {

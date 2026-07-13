@@ -21,10 +21,12 @@ function randomSlug(len = 8) {
   return out;
 }
 
-export function createPaylink({ amount, label }) {
+export function createPaylink({ amount, label, creatorId = null, address = null }) {
   const slug = randomSlug();
   const link = {
     slug,
+    creatorId, // null = the single-operator demo paylink (pays into PORTAL_ADDRESS)
+    address, // creator's own receiving address, or null to fall back to PORTAL_ADDRESS
     amount: String(amount),
     label: label && String(label).trim() ? String(label).trim().slice(0, 80) : 'Payment',
     createdAt: Date.now(),
@@ -37,6 +39,10 @@ export function createPaylink({ amount, label }) {
 
 export function getPaylink(slug) {
   return links.get(slug) ?? null;
+}
+
+export function listByCreator(creatorId) {
+  return [...links.values()].filter((l) => l.creatorId === creatorId);
 }
 
 export function recordPayment(slug, { txid, valueZats, at = Date.now() }) {

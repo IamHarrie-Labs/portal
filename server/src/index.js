@@ -3,28 +3,17 @@ import jwt from 'jsonwebtoken';
 import QRCode from 'qrcode';
 import crypto from 'node:crypto';
 import path from 'node:path';
-import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createChallenge, getChallenge, sweepExpired, wallPosts } from './challenges.js';
-import { startWatcher, selfSendMemo } from './watcher.js';
-import { createPaylink, getPaylink } from './paylinks.js';
+import { startWatcher, selfSendMemo, newAddress } from './watcher.js';
+import { createPaylink, getPaylink, listByCreator } from './paylinks.js';
 import { rateLimit } from './rateLimit.js';
+import { JWT_SECRET, signCreatorToken, requireCreator } from './jwtAuth.js';
+import { createCreator, findByUsername, getCreator, verifyPassword, setWebhookUrl, publicCreator } from './creators.js';
+import { listGates, getGate, upsertGate, deleteGate } from './gates.js';
+import { isSafeWebhookUrl } from './webhooks.js';
 
 const PORT = process.env.PORT ?? 8787;
-// Falls back to a secret persisted on disk (not a random one per boot) so
-// sessions survive a server restart even without PORTAL_JWT_SECRET set.
-function loadOrCreateJwtSecret() {
-  if (process.env.PORTAL_JWT_SECRET) return process.env.PORTAL_JWT_SECRET;
-  const secretPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '.jwt-secret');
-  try {
-    return fs.readFileSync(secretPath, 'utf8').trim();
-  } catch {
-    const secret = crypto.randomBytes(32).toString('hex');
-    fs.writeFileSync(secretPath, secret, 'utf8');
-    return secret;
-  }
-}
-const JWT_SECRET = loadOrCreateJwtSecret();
 // The server's shielded receiving address (unified address). Set via env once the
 // mainnet wallet is generated.
 const RECEIVE_ADDRESS = process.env.PORTAL_ADDRESS;
@@ -61,15 +50,19 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // Public, unauthenticated endpoints get a generous but real ceiling per IP.
 const challengeRateLimit = rateLimit({ windowMs: 5 * 60_000, max: 40 }); // 40 challenges / 5 min
 const paylinkCreateRateLimit = rateLimit({ windowMs: 10 * 60_000, max: 10 }); // 10 new paylinks / 10 min
+const creatorRegisterRateLimit = rateLimit({ windowMs: 60 * 60_000, max: 5 }); // 5 signups / hour
+const creatorLoginRateLimit = rateLimit({ windowMs: 15 * 60_000, max: 20 }); // 20 attempts / 15 min
 
 function zecToZats(zec) {
   return Math.round(Number(zec) * 1e8);
 }
 
 // ZIP-321 payment URI carrying the one-time challenge code in the memo.
-function paymentUri(code, amount) {
+// `address` defaults to the single operator's address; creator Gates and
+// creator Paylinks pass their own diversified address instead.
+function paymentUri(code, amount, address = RECEIVE_ADDRESS) {
   const memoB64url = Buffer.from(code, 'utf8').toString('base64url');
-  return `zcash:${RECEIVE_ADDRESS}?amount=${amount}&memo=${memoB64url}`;
+  return `zcash:${address}?amount=${amount}&memo=${memoB64url}`;
 }
 
 app.post('/auth/challenge', challengeRateLimit, async (req, res) => {
@@ -141,19 +134,144 @@ app.get('/paylinks/:slug', (req, res) => {
 app.post('/paylinks/:slug/challenge', challengeRateLimit, async (req, res) => {
   const link = getPaylink(req.params.slug);
   if (!link) return res.status(404).json({ error: 'not found' });
+  const payAddress = link.address ?? RECEIVE_ADDRESS;
   const challenge = createChallenge({ purpose: `paylink:${link.slug}`, minAmountZats: zecToZats(link.amount) });
-  const uri = paymentUri(challenge.code, link.amount);
+  const uri = paymentUri(challenge.code, link.amount, payAddress);
   const qr = await QRCode.toDataURL(uri, { margin: 1, width: 280 });
   res.json({
     id: challenge.id,
     code: challenge.code,
-    address: RECEIVE_ADDRESS,
+    address: payAddress,
     amount: link.amount,
     label: link.label,
     uri,
     qr,
     expiresAt: challenge.expiresAt,
   });
+});
+
+// --- Creator accounts: multi-tenant on top of the same single wallet seed ---
+// Each creator gets their own diversified receiving address (see
+// watcher.js#newAddress) so their Gates, Paylinks, and webhooks are fully
+// isolated from the single-operator demo and from each other, without
+// running a separate wallet process per creator.
+
+const USERNAME_RE = /^[a-zA-Z0-9_-]{3,40}$/;
+
+app.post('/creators/register', creatorRegisterRateLimit, async (req, res) => {
+  const username = String(req.body?.username ?? '');
+  const password = String(req.body?.password ?? '');
+  if (!USERNAME_RE.test(username)) {
+    return res.status(400).json({ error: 'username must be 3-40 chars: letters, numbers, underscore, hyphen' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'password must be at least 8 characters' });
+  }
+  if (findByUsername(username)) {
+    return res.status(409).json({ error: 'username already taken' });
+  }
+  let address;
+  try {
+    address = await newAddress();
+  } catch (err) {
+    return res.status(503).json({ error: `wallet unavailable: ${err.message}` });
+  }
+  const creator = createCreator({ username, password, address });
+  res.json({ token: signCreatorToken(creator), creator: publicCreator(creator) });
+});
+
+app.post('/creators/login', creatorLoginRateLimit, (req, res) => {
+  const username = String(req.body?.username ?? '');
+  const password = String(req.body?.password ?? '');
+  const creator = findByUsername(username);
+  if (!creator || !verifyPassword(password, creator.passwordSalt, creator.passwordHash)) {
+    return res.status(401).json({ error: 'invalid username or password' });
+  }
+  res.json({ token: signCreatorToken(creator), creator: publicCreator(creator) });
+});
+
+app.get('/creators/me', requireCreator, (req, res) => {
+  const creator = getCreator(req.creatorId);
+  if (!creator) return res.status(404).json({ error: 'creator not found' });
+  const paylinks = listByCreator(creator.id).map((l) => ({
+    slug: l.slug,
+    amount: l.amount,
+    label: l.label,
+    paymentCount: l.payments.length,
+    totalZats: l.payments.reduce((s, p) => s + (p.valueZats ?? 0), 0),
+  }));
+  res.json({ creator: publicCreator(creator), gates: listGates(creator.id), paylinks });
+});
+
+app.patch('/creators/me/webhook', requireCreator, async (req, res) => {
+  const url = req.body?.url ? String(req.body.url) : null;
+  if (url) {
+    const safe = await isSafeWebhookUrl(url);
+    if (!safe) return res.status(400).json({ error: 'webhook url must be a public http(s) endpoint' });
+  }
+  const creator = setWebhookUrl(req.creatorId, url);
+  res.json({ creator: publicCreator(creator) });
+});
+
+// --- Configurable multi-tier Gates, owned by a creator ---
+
+app.get('/creators/me/gates', requireCreator, (req, res) => {
+  res.json({ gates: listGates(req.creatorId) });
+});
+
+app.put('/creators/me/gates/:key', requireCreator, (req, res) => {
+  try {
+    const gate = upsertGate(req.creatorId, req.params.key, req.body ?? {});
+    res.json({ key: req.params.key, gate });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/creators/me/gates/:key', requireCreator, (req, res) => {
+  deleteGate(req.creatorId, req.params.key);
+  res.json({ ok: true });
+});
+
+// Public: anyone paying into a creator's Gate. No auth — this is the
+// end-user side, mirroring /auth/challenge and /paylinks/:slug/challenge.
+app.post('/creators/:creatorId/gates/:key/challenge', challengeRateLimit, async (req, res) => {
+  const creator = getCreator(req.params.creatorId);
+  if (!creator) return res.status(404).json({ error: 'creator not found' });
+  const gate = getGate(req.params.creatorId, req.params.key);
+  if (!gate) return res.status(404).json({ error: 'gate not found' });
+  const challenge = createChallenge({
+    purpose: `cgate:${req.params.creatorId}:${req.params.key}`,
+    minAmountZats: zecToZats(gate.amount),
+    requireConfirmation: gate.requireConfirmation,
+  });
+  const uri = paymentUri(challenge.code, gate.amount, creator.address);
+  const qr = await QRCode.toDataURL(uri, { margin: 1, width: 280 });
+  res.json({
+    id: challenge.id,
+    code: challenge.code,
+    address: creator.address,
+    amount: gate.amount,
+    label: gate.label,
+    uri,
+    qr,
+    expiresAt: challenge.expiresAt,
+  });
+});
+
+// Authenticated: a creator's own dashboard can create Paylinks that pay into
+// their own address, distinct from the anonymous single-operator /paylinks.
+app.post('/creators/me/paylinks', requireCreator, paylinkCreateRateLimit, (req, res) => {
+  const amt = Number(req.body?.amount);
+  if (!(amt > 0)) return res.status(400).json({ error: 'amount must be a positive ZEC value' });
+  const creator = getCreator(req.creatorId);
+  const link = createPaylink({
+    amount: req.body.amount,
+    label: req.body?.label,
+    creatorId: creator.id,
+    address: creator.address,
+  });
+  res.json({ slug: link.slug, url: `/pay/${link.slug}`, amount: link.amount, label: link.label });
 });
 
 // Pretty URL for the pay page; the client reads the slug from the path.
