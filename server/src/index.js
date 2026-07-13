@@ -85,6 +85,11 @@ app.post('/auth/challenge', challengeRateLimit, async (req, res) => {
     address: RECEIVE_ADDRESS,
     amount: gate.amount,
     label: gate.label,
+    // Creator sign-in needs the sender to identify themselves INSIDE the
+    // memo (shielded Zcash has no sender field) — surface that in the modal.
+    note: purpose === 'creator-login'
+      ? 'Important: add your own Zcash address (u1...) in the memo after the code. That address is your account.'
+      : undefined,
     uri,
     qr,
     expiresAt: challenge.expiresAt,
@@ -128,14 +133,13 @@ app.get('/auth/status/:id', async (req, res) => {
   const readyForToken = c.requireConfirmation ? c.status === 'confirmed' : (c.status === 'detected' || c.status === 'confirmed');
   if (readyForToken) {
     if (c.purpose === 'creator-login') {
-      // Persistence depends on the wallet reusing the same reply-to address
-      // across logins — the same assumption the pseudonymous end-user
-      // subject below already makes, just promoted to a durable account key
-      // instead of a one-off session identity. Wallets that don't include a
-      // reply-to (or rotate it) can't be recognized as a returning creator;
-      // that's a known limitation, documented, not silently papered over.
+      // The account key is a reply address parsed out of the memo TEXT
+      // (there is no protocol-level sender field on shielded Zcash — see
+      // extractReplyAddress in challenges.js). Persistence depends on the
+      // creator using the same address each login. Missing address = we
+      // tell them exactly how to include one, from any wallet.
       if (!c.replyTo) {
-        out.error = 'Your wallet did not include a reply-to address in the memo. Use Zashi or Ywallet to sign in as a creator.';
+        out.error = 'No reply address found in your memo. Add your own Zcash address (u1...) after the code in the memo, or enable "include reply address" in Ywallet, then request a new code and try again.';
       } else {
         try {
           const identityHash = crypto.createHash('sha256').update(c.replyTo).digest('hex').slice(0, 32);

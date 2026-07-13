@@ -49,6 +49,19 @@ export function getChallenge(id) {
 // disk so a server restart doesn't erase it.
 const wall = loadJson('wall.json', []);
 
+// A "reply-to" on Zcash is not a protocol field — it's a convention where the
+// sending wallet appends its own shielded address into the memo text (Ywallet
+// calls it "include reply address"; a user can also just type their address
+// after the code in any wallet). zingolib's value_transfers output has no
+// reply_to field, so the ONLY place a sender identity can come from is the
+// memo text itself. Matches unified (u1...) and Sapling (zs1...) addresses.
+const REPLY_ADDR_RE = /\b(?:u1|zs1)[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{30,}\b/i;
+
+export function extractReplyAddress(memoText) {
+  const m = String(memoText ?? '').match(REPLY_ADDR_RE);
+  return m ? m[0] : null;
+}
+
 /** Match an incoming memo against active challenges. Returns the challenge if matched. */
 export function matchMemo(memoText, { txid, replyTo = null, valueZats = 0 } = {}) {
   if (!memoText) return null;
@@ -56,7 +69,7 @@ export function matchMemo(memoText, { txid, replyTo = null, valueZats = 0 } = {}
     if (c.status !== 'pending' || Date.now() > c.expiresAt) continue;
     if (memoText.includes(c.code)) {
       c.txid = txid ?? null;
-      c.replyTo = replyTo;
+      c.replyTo = replyTo ?? extractReplyAddress(memoText);
       c.receivedZats = valueZats;
       if (valueZats < c.minAmountZats) {
         // Code is spent either way — a Gate can't be unlocked twice with the
@@ -66,7 +79,9 @@ export function matchMemo(memoText, { txid, replyTo = null, valueZats = 0 } = {}
       }
       c.status = 'detected';
       if (c.purpose === 'login') {
-        const message = memoText.replace(c.code, '').replace(/^[\s:—-]+|[\s]+$/g, '');
+        // Strip the code AND any reply address before publishing — the whole
+        // point of the Wall is that posts are anonymous.
+        const message = memoText.replace(c.code, '').replace(REPLY_ADDR_RE, '').replace(/^[\s:—-]+|[\s]+$/g, '');
         if (message) {
           wall.unshift({ message: message.slice(0, 280), txid, at: Date.now() });
           if (wall.length > 200) wall.pop();

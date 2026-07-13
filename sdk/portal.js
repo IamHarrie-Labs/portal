@@ -98,6 +98,18 @@
         el('div', { style: S.code }, ch.code),
       ];
 
+      // Purpose-specific instruction from the server (e.g. creator sign-in
+      // requires the sender's own address inside the memo).
+      if (ch.note) {
+        inner.push(el('div', {
+          style: {
+            fontSize: '12.5px', color: '#f4b728', marginTop: '12px', lineHeight: '1.5',
+            background: 'rgba(244,183,40,0.06)', border: '1px solid rgba(244,183,40,0.18)',
+            borderRadius: '10px', padding: '10px 14px', textAlign: 'left',
+          },
+        }, ch.note));
+      }
+
       if (isMobile()) {
         inner.push(el('div', {}, el('a', { href: ch.uri, style: S.btn }, 'Tap to open wallet')));
       } else {

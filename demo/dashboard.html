@@ -64,7 +64,7 @@
         <button id="walletSignIn" class="btn-gold rounded-full px-6 py-3 text-sm w-full">Sign in with Zcash</button>
         <p id="authError" class="err-text hidden mt-4"></p>
         <p class="text-xs text-gray-600 mt-5">First time signing in from this wallet? We mint you a receiving address on the spot &mdash; can take up to a minute.</p>
-        <p class="text-xs text-gray-600 mt-2">Requires a wallet that includes a reply-to address in the memo, like Zashi or Ywallet.</p>
+        <p class="text-xs text-gray-600 mt-2"><strong class="text-gray-400">How it identifies you:</strong> include your own Zcash address in the memo after the code &mdash; type it in manually, or enable &ldquo;include reply address&rdquo; in Ywallet. Same address = same account, every time.</p>
       </div>
     </div>
   </section>
@@ -150,7 +150,7 @@
 
 </main>
 
-<script src="/sdk/portal.js"></script>
+<script src="/sdk/portal.js?v=3"></script>
 <script>
 (function () {
   const TOKEN_KEY = 'portal_creator_token';
