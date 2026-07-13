@@ -131,10 +131,23 @@ function spawnSession() {
   proc.on('exit', (code) => killSession(`exited with code ${code}`));
 }
 
-/** Send a command expecting a JSON reply. */
+// The watcher's own poll loop and any HTTP-triggered wallet call (e.g.
+// newAddress() from a creator signup) both want to run commands on the same
+// single zingo-cli session. Rejecting the loser used to be the behavior here,
+// which meant a signup landing mid-poll-cycle failed outright. Queue instead
+// so concurrent callers serialize onto the one session rather than racing it.
+let commandQueue = Promise.resolve();
+
+/** Send a command expecting a JSON reply. Serialized against other callers. */
 function runCommand(cmd, timeoutMs = warmedUp ? 20000 : 90000) {
+  const run = () => runCommandExclusive(cmd, timeoutMs);
+  const result = commandQueue.then(run, run);
+  commandQueue = result.then(() => {}, () => {}); // never let one failure poison the queue
+  return result;
+}
+
+function runCommandExclusive(cmd, timeoutMs) {
   if (!proc) return Promise.reject(new Error('session not running'));
-  if (pending) return Promise.reject(new Error('a command is already in flight'));
   buf = '';
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {

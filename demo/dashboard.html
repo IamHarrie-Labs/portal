@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M2 28V12A10 10 0 0 1 22 12V28H2Z' fill='%23f4b728' stroke='%2314100a' stroke-width='0.6'/%3E%3C/svg%3E">
+<meta name="description" content="Manage your Portal creator account: Gates, Paylinks, and webhooks.">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/tailwind.css">
+<style>
+  html, body { font-family: 'Inter', sans-serif; background: #060709; overflow-x: hidden; }
+  h1, h2, h3, .font-display { font-family: 'Space Grotesk', sans-serif; }
+  .serif-accent { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .card { background: #0e1017; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; }
+  .btn-gold { background: linear-gradient(120deg, #f7931a 0%, #f4b728 65%); color: #14100a; font-weight: 600; }
+  .btn-gold:hover { filter: brightness(1.06); }
+  .btn-ghost { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #f2f3f7; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+  input.field, textarea.field {
+    background: #0a0c11; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+    padding: 10px 14px; color: #f2f3f7; font-family: inherit; font-size: 14px; outline: none; width: 100%;
+  }
+  input.field:focus { border-color: rgba(244,183,40,0.5); }
+  label.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #a7afbd; }
+  .tab-btn { padding: 8px 4px; font-size: 14px; color: #6b7280; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; }
+  .tab-btn.active { color: #fff; border-color: #f4b728; }
+  .stat-card { background: #0e1017; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px 20px; }
+  .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 600; color: #fff; }
+  .stat-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+  .bar-row { display: grid; grid-template-columns: 120px 1fr 90px; gap: 12px; align-items: center; font-size: 13px; }
+  .bar-track { background: rgba(255,255,255,0.05); border-radius: 6px; height: 10px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, #f7931a, #f4b728); border-radius: 6px; }
+  .row-item { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 16px; background: #0a0c11; }
+  .err-text { color: #f87171; font-size: 13px; }
+  .ok-text { color: #4ade80; font-size: 13px; }
+  ::placeholder { color: #4b5563; }
+</style>
+</head>
+<body class="text-white">
+
+<nav class="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 border-b border-white/5" style="background: rgba(6,7,9,0.85); backdrop-filter: blur(12px);">
+  <a href="/" class="flex items-end gap-2.5">
+    <svg width="22" height="26" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728" stroke="#14100a" stroke-width="0.6"/></svg>
+    <span class="font-display text-lg leading-none" style="font-weight:600;">portal</span>
+    <span class="text-gray-600 text-sm leading-none">/ dashboard</span>
+  </a>
+  <div class="flex items-center gap-6 text-sm">
+    <a href="/docs.html" class="text-gray-400 hover:text-white transition-colors">Docs</a>
+    <a href="https://github.com/IamHarrie-Labs/portal" target="_blank" rel="noopener" class="text-gray-400 hover:text-white transition-colors">GitHub</a>
+    <button id="signOutBtn" class="hidden btn-ghost rounded-full px-4 py-1.5 text-sm">Sign out</button>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 sm:px-6 md:px-12 py-14">
+
+  <!-- AUTH VIEW -->
+  <section id="authView">
+    <div class="max-w-md mx-auto">
+      <h1 class="text-3xl font-medium mb-2 text-center">Creator <span class="serif-accent text-gold">dashboard</span></h1>
+      <p class="text-sm text-gray-500 text-center mb-8">Accept payments through this Portal instance under your own address. Gates, Paylinks, and webhooks, all yours.</p>
+      <div class="card p-8">
+        <div class="flex gap-6 mb-6 border-b border-white/5">
+          <button id="tabLogin" class="tab-btn active">Sign in</button>
+          <button id="tabRegister" class="tab-btn">Create account</button>
+        </div>
+
+        <form id="loginForm" class="space-y-3">
+          <input class="field" id="loginUsername" placeholder="Username" autocomplete="username" required>
+          <input class="field" id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" required>
+          <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm w-full">Sign in</button>
+          <p id="loginError" class="err-text hidden"></p>
+        </form>
+
+        <form id="registerForm" class="space-y-3 hidden">
+          <input class="field" id="regUsername" placeholder="Username (3-40 chars)" autocomplete="username" required>
+          <input class="field" id="regPassword" type="password" placeholder="Password (min 8 chars)" autocomplete="new-password" required>
+          <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm w-full">Create account</button>
+          <p class="text-xs text-gray-500">This mints a real Zcash receiving address on our wallet's seed, so it takes a few seconds.</p>
+          <p id="registerError" class="err-text hidden"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD VIEW -->
+  <section id="dashboardView" class="hidden">
+
+    <div class="card p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="text-xs uppercase tracking-widest text-gray-500 mb-1">Signed in as</div>
+        <div class="text-lg font-medium" id="profileUsername">-</div>
+      </div>
+      <div class="flex-1 sm:max-w-md">
+        <div class="text-xs uppercase tracking-widest text-gray-500 mb-1">Your receiving address</div>
+        <div class="flex items-center gap-2">
+          <span id="profileAddress" class="font-mono text-xs text-gray-400 truncate">-</span>
+          <button id="copyAddress" class="text-gold text-xs whitespace-nowrap hover:underline">copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">ZEC received</div></div>
+      <div class="stat-card"><div class="stat-value" id="statPayments">0</div><div class="stat-label">Payments</div></div>
+      <div class="stat-card"><div class="stat-value" id="statGates">0</div><div class="stat-label">Gates</div></div>
+      <div class="stat-card"><div class="stat-value" id="statPaylinks">0</div><div class="stat-label">Paylinks</div></div>
+    </div>
+
+    <div class="card p-6 mb-8">
+      <h2 class="text-base font-medium mb-4">Received by source</h2>
+      <div id="analyticsChart" class="space-y-3">
+        <p class="text-sm text-gray-500">No payments detected yet. Once someone pays a Gate or Paylink, it shows up here.</p>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8">
+
+      <div class="card p-6">
+        <h2 class="text-base font-medium mb-4">Gates</h2>
+        <div id="gatesList" class="space-y-3 mb-5"></div>
+        <form id="gateForm" class="space-y-2 pt-4 border-t border-white/5">
+          <div class="grid grid-cols-2 gap-2">
+            <input class="field" id="gateKey" placeholder="key (e.g. vip)">
+            <input class="field" id="gateAmount" placeholder="amount (ZEC)">
+          </div>
+          <input class="field" id="gateLabel" placeholder="Label (e.g. VIP Access)">
+          <label class="check"><input type="checkbox" id="gateConfirm"> Require mined confirmation, not just mempool</label>
+          <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm w-full">Add tier</button>
+          <p id="gateError" class="err-text hidden"></p>
+        </form>
+      </div>
+
+      <div class="card p-6">
+        <h2 class="text-base font-medium mb-4">Paylinks</h2>
+        <div id="paylinksList" class="space-y-3 mb-5"></div>
+        <form id="paylinkForm" class="space-y-2 pt-4 border-t border-white/5">
+          <div class="grid grid-cols-2 gap-2">
+            <input class="field" id="plAmount" placeholder="amount (ZEC)">
+            <input class="field" id="plLabel" placeholder="Label (e.g. Coffee tip)">
+          </div>
+          <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm w-full">Create paylink</button>
+          <p id="paylinkError" class="err-text hidden"></p>
+        </form>
+      </div>
+
+    </div>
+
+    <div class="card p-6 mt-8">
+      <h2 class="text-base font-medium mb-2">Webhook</h2>
+      <p class="text-sm text-gray-500 mb-4">Get an HMAC-signed POST the moment a payment into one of your Gates or Paylinks is detected, and again once confirmed. Must be a public http(s) URL &mdash; localhost and private addresses are rejected.</p>
+      <form id="webhookForm" class="flex flex-col sm:flex-row gap-2">
+        <input class="field flex-1" id="webhookUrl" placeholder="https://yourapp.com/hooks/portal">
+        <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm whitespace-nowrap">Save</button>
+      </form>
+      <p id="webhookMsg" class="text-sm mt-2 hidden"></p>
+      <p class="text-xs text-gray-600 mt-3">Verify each delivery with the <code class="text-gold">x-portal-signature</code> header: hex HMAC-SHA256 of the raw body, keyed with your webhook secret. See <a href="/docs.html#creators" class="text-gold hover:underline">the docs</a> for details.</p>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+(function () {
+  const TOKEN_KEY = 'portal_creator_token';
+
+  function token() { return localStorage.getItem(TOKEN_KEY); }
+  function setToken(t) { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }
+
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    if (token()) headers.Authorization = `Bearer ${token()}`;
+    const res = await fetch(path, Object.assign({}, opts, { headers }));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `request failed (${res.status})`);
+    return data;
+  }
+
+  function zecFromZats(z) { return (Number(z || 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '.0'); }
+  function short(addr) { return addr ? `${addr.slice(0, 14)}…${addr.slice(-6)}` : ''; }
+
+  function showAuth() {
+    document.getElementById('authView').classList.remove('hidden');
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('signOutBtn').classList.add('hidden');
+  }
+  function showDashboard() {
+    document.getElementById('authView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+    document.getElementById('signOutBtn').classList.remove('hidden');
+  }
+
+  // ---- tabs ----
+  document.getElementById('tabLogin').addEventListener('click', () => {
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('tabRegister').classList.remove('active');
+    document.getElementById('loginForm').classList.remove('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+  });
+  document.getElementById('tabRegister').addEventListener('click', () => {
+    document.getElementById('tabRegister').classList.add('active');
+    document.getElementById('tabLogin').classList.remove('active');
+    document.getElementById('registerForm').classList.remove('hidden');
+    document.getElementById('loginForm').classList.add('hidden');
+  });
+
+  // ---- auth ----
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('loginError');
+    err.classList.add('hidden');
+    try {
+      const out = await api('/creators/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          username: document.getElementById('loginUsername').value.trim(),
+          password: document.getElementById('loginPassword').value,
+        }),
+      });
+      setToken(out.token);
+      await loadDashboard();
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('registerError');
+    err.classList.add('hidden');
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Creating address…';
+    try {
+      const out = await api('/creators/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          username: document.getElementById('regUsername').value.trim(),
+          password: document.getElementById('regPassword').value,
+        }),
+      });
+      setToken(out.token);
+      await loadDashboard();
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create account';
+    }
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', () => {
+    setToken(null);
+    showAuth();
+  });
+
+  document.getElementById('copyAddress').addEventListener('click', async () => {
+    const addr = document.getElementById('profileAddress').dataset.full || '';
+    try { await navigator.clipboard.writeText(addr); } catch {}
+    const btn = document.getElementById('copyAddress');
+    const original = btn.textContent;
+    btn.textContent = 'copied';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+
+  // ---- dashboard data ----
+  async function loadDashboard() {
+    let data;
+    try {
+      data = await api('/creators/me');
+    } catch {
+      setToken(null);
+      showAuth();
+      return;
+    }
+    showDashboard();
+    renderProfile(data.creator);
+    renderGates(data.gates);
+    renderPaylinks(data.paylinks);
+    renderStats(data.gates, data.paylinks);
+    renderChart(data.gates, data.paylinks);
+    document.getElementById('webhookUrl').value = data.creator.webhookUrl || '';
+  }
+
+  function renderProfile(creator) {
+    document.getElementById('profileUsername').textContent = creator.username;
+    const addrEl = document.getElementById('profileAddress');
+    addrEl.textContent = short(creator.address);
+    addrEl.dataset.full = creator.address;
+  }
+
+  function renderStats(gates, paylinks) {
+    let totalZats = 0, payments = 0;
+    for (const l of paylinks) { totalZats += l.totalZats; payments += l.paymentCount; }
+    document.getElementById('statTotal').textContent = zecFromZats(totalZats);
+    document.getElementById('statPayments').textContent = payments;
+    document.getElementById('statGates').textContent = Object.keys(gates).length;
+    document.getElementById('statPaylinks').textContent = paylinks.length;
+  }
+
+  function renderChart(gates, paylinks) {
+    const el = document.getElementById('analyticsChart');
+    const sources = paylinks
+      .filter((l) => l.totalZats > 0)
+      .map((l) => ({ label: l.label, zats: l.totalZats }));
+    if (sources.length === 0) {
+      el.innerHTML = '<p class="text-sm text-gray-500">No payments detected yet. Once someone pays a Gate or Paylink, it shows up here.</p>';
+      return;
+    }
+    const max = Math.max(...sources.map((s) => s.zats));
+    el.innerHTML = sources.map((s) => `
+      <div class="bar-row">
+        <span class="text-gray-400 truncate">${escapeHtml(s.label)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, (s.zats / max) * 100)}%"></div></div>
+        <span class="text-gray-300 font-mono text-xs text-right">${zecFromZats(s.zats)} ZEC</span>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function renderGates(gates) {
+    const el = document.getElementById('gatesList');
+    const keys = Object.keys(gates);
+    if (keys.length === 0) {
+      el.innerHTML = '<p class="text-sm text-gray-500">No Gates yet. Add a priced tier below.</p>';
+      return;
+    }
+    el.innerHTML = keys.map((key) => {
+      const g = gates[key];
+      return `
+        <div class="row-item flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-sm font-medium truncate">${escapeHtml(g.label)}</div>
+            <div class="text-xs text-gray-500 font-mono">${escapeHtml(key)} &middot; ${escapeHtml(g.amount)} ZEC${g.requireConfirmation ? ' &middot; confirmed-only' : ''}</div>
+          </div>
+          <button data-key="${escapeHtml(key)}" class="delete-gate text-xs text-gray-500 hover:text-red-400 whitespace-nowrap">delete</button>
+        </div>`;
+    }).join('');
+    el.querySelectorAll('.delete-gate').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        try { await api(`/creators/me/gates/${encodeURIComponent(btn.dataset.key)}`, { method: 'DELETE' }); await loadDashboard(); } catch {}
+      });
+    });
+  }
+
+  function renderPaylinks(paylinks) {
+    const el = document.getElementById('paylinksList');
+    if (paylinks.length === 0) {
+      el.innerHTML = '<p class="text-sm text-gray-500">No Paylinks yet. Create one below.</p>';
+      return;
+    }
+    el.innerHTML = paylinks.map((l) => `
+      <div class="row-item">
+        <div class="flex items-center justify-between gap-3 mb-1">
+          <div class="text-sm font-medium truncate">${escapeHtml(l.label)}</div>
+          <span class="text-xs text-gray-500 whitespace-nowrap">${escapeHtml(l.amount)} ZEC</span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <a href="/pay/${escapeHtml(l.slug)}" target="_blank" class="text-gold text-xs font-mono hover:underline truncate">${location.origin}/pay/${escapeHtml(l.slug)}</a>
+          <span class="text-xs text-gray-500 whitespace-nowrap">${l.paymentCount} paid</span>
+        </div>
+      </div>`).join('');
+  }
+
+  // ---- create gate ----
+  document.getElementById('gateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('gateError');
+    err.classList.add('hidden');
+    const key = document.getElementById('gateKey').value.trim();
+    const amount = document.getElementById('gateAmount').value.trim();
+    const label = document.getElementById('gateLabel').value.trim();
+    const requireConfirmation = document.getElementById('gateConfirm').checked;
+    try {
+      await api(`/creators/me/gates/${encodeURIComponent(key)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ amount, label, requireConfirmation }),
+      });
+      document.getElementById('gateForm').reset();
+      await loadDashboard();
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+    }
+  });
+
+  // ---- create paylink ----
+  document.getElementById('paylinkForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('paylinkError');
+    err.classList.add('hidden');
+    const amount = document.getElementById('plAmount').value.trim();
+    const label = document.getElementById('plLabel').value.trim();
+    try {
+      await api('/creators/me/paylinks', { method: 'POST', body: JSON.stringify({ amount, label }) });
+      document.getElementById('paylinkForm').reset();
+      await loadDashboard();
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.classList.remove('hidden');
+    }
+  });
+
+  // ---- webhook ----
+  document.getElementById('webhookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('webhookMsg');
+    msg.classList.add('hidden');
+    const url = document.getElementById('webhookUrl').value.trim() || null;
+    try {
+      await api('/creators/me/webhook', { method: 'PATCH', body: JSON.stringify({ url }) });
+      msg.textContent = 'Saved.';
+      msg.className = 'ok-text text-sm mt-2';
+    } catch (ex) {
+      msg.textContent = ex.message;
+      msg.className = 'err-text text-sm mt-2';
+    }
+  });
+
+  // ---- boot ----
+  if (token()) loadDashboard(); else showAuth();
+})();
+</script>
+
+</body>
+</html>
