@@ -87,7 +87,7 @@
           },
         }, (() => {
           const wrap = document.createElement('div');
-          wrap.innerHTML = '<svg width="40" height="46" viewBox="0 0 24 28" fill="none"><path d="M2 28V12C2 5.9 6.9 1 13 1C19.1 1 24 5.9 24 12V28H16V13C16 10.8 14.2 9 12 9C9.8 9 8 10.8 8 13V28H2Z" fill="#f4b728"/></svg>';
+          wrap.innerHTML = '<svg width="40" height="46" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728" stroke="#14100a" stroke-width="0.6"/></svg>';
           return wrap.firstChild;
         })()),
         el('div', { style: { fontSize: '19px', fontWeight: '700', letterSpacing: '-0.02em' } }, ch.label ?? 'Sign in with Zcash'),
