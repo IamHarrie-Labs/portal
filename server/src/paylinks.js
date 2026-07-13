@@ -1,11 +1,18 @@
 import crypto from 'node:crypto';
+import { loadJson, saveJson } from './store.js';
 
 // A Paylink is a reusable payment request: a creator sets an amount + label
 // once and gets a shareable URL. Anyone who opens it gets a fresh one-time
 // Challenge (via challenges.js) for that amount, so many people can pay the
 // same link (e.g. a tip jar), each independently detected.
+//
+// Persisted to disk so a server restart doesn't lose every link ever created.
 const ALPHABET = 'abcdefghjkmnpqrstvwxyz23456789';
-const links = new Map(); // slug -> paylink
+const links = new Map(Object.entries(loadJson('paylinks.json', {})));
+
+function persist() {
+  saveJson('paylinks.json', Object.fromEntries(links));
+}
 
 function randomSlug(len = 8) {
   const bytes = crypto.randomBytes(len);
@@ -24,6 +31,7 @@ export function createPaylink({ amount, label }) {
     payments: [], // { txid, valueZats, at }
   };
   links.set(slug, link);
+  persist();
   return link;
 }
 
@@ -35,4 +43,5 @@ export function recordPayment(slug, { txid, valueZats, at = Date.now() }) {
   const link = links.get(slug);
   if (!link) return;
   link.payments.push({ txid, valueZats, at });
+  persist();
 }

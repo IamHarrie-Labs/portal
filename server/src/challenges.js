@@ -1,9 +1,10 @@
 ﻿import crypto from 'node:crypto';
+import { loadJson, saveJson } from './store.js';
 
 // Challenge codes are short, human-checkable, and collision-safe for the
 // active window. Format: PT-XXXXXX (base32, no ambiguous chars).
 const ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';
-const CHALLENGE_TTL_MS = 30 * 60 * 1000; // generous window while debugging; tighten before submission
+const CHALLENGE_TTL_MS = 10 * 60 * 1000;
 
 const active = new Map(); // id -> challenge
 
@@ -14,7 +15,7 @@ function randomCode(len = 6) {
   return `PT-${out}`;
 }
 
-export function createChallenge({ purpose = 'login', minAmountZats = 0, forcedCode = null } = {}) {
+export function createChallenge({ purpose = 'login', minAmountZats = 0, forcedCode = null, requireConfirmation = false } = {}) {
   const id = crypto.randomUUID();
   const code = forcedCode ?? randomCode(); // forcedCode is debug-only (see index.js)
   const challenge = {
@@ -22,6 +23,9 @@ export function createChallenge({ purpose = 'login', minAmountZats = 0, forcedCo
     code,
     purpose,
     minAmountZats, // 0 for plain login; >0 for a Gate that must be paid to unlock
+    // High-value Gates can require a mined confirmation instead of accepting
+    // the payment the moment it's seen in the mempool (see watcher.js).
+    requireConfirmation,
     status: 'pending', // pending -> detected -> confirmed | underpaid | expired
     createdAt: Date.now(),
     expiresAt: Date.now() + CHALLENGE_TTL_MS,
@@ -41,8 +45,9 @@ export function getChallenge(id) {
 }
 
 // The Shielded Wall: any text in a login memo beyond the challenge code is a
-// public post, written to us via a mainnet shielded transaction.
-const wall = [];
+// public post, written to us via a mainnet shielded transaction. Persisted to
+// disk so a server restart doesn't erase it.
+const wall = loadJson('wall.json', []);
 
 /** Match an incoming memo against active challenges. Returns the challenge if matched. */
 export function matchMemo(memoText, { txid, replyTo = null, valueZats = 0 } = {}) {
@@ -62,8 +67,11 @@ export function matchMemo(memoText, { txid, replyTo = null, valueZats = 0 } = {}
       c.status = 'detected';
       if (c.purpose === 'login') {
         const message = memoText.replace(c.code, '').replace(/^[\s:—-]+|[\s]+$/g, '');
-        if (message) wall.unshift({ message: message.slice(0, 280), txid, at: Date.now() });
-        if (wall.length > 200) wall.pop();
+        if (message) {
+          wall.unshift({ message: message.slice(0, 280), txid, at: Date.now() });
+          if (wall.length > 200) wall.pop();
+          saveJson('wall.json', wall);
+        }
       }
       return c;
     }

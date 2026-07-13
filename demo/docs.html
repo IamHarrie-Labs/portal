@@ -180,6 +180,7 @@ console.log(session.code);   <span class="tok-c">// the one-time code that was m
       <ul class="space-y-3 mb-4 list-disc pl-5">
         <li><strong>Pricing is server-authoritative.</strong> A client asks for a purpose, like <code>gate:vip</code>. The server decides what that purpose costs. Sending a request that claims a lower price does nothing; the server ignores it.</li>
         <li><strong>Underpayment fails loudly.</strong> If someone sends less than the Gate requires, the challenge resolves to <code>underpaid</code> with the exact amounts, and the SDK surfaces a clear message. The code is spent either way, so a partial payment can never be replayed into access.</li>
+        <li><strong>Confirmation depth is configurable.</strong> By default a Gate unlocks the instant its payment is seen in the mempool, the same speed as Login. For a Gate expensive enough that you don't want to trust an unconfirmed transaction, set <code>requireConfirmation</code> and it waits for a mined block instead. The client experience doesn't change, it just takes a little longer.</li>
       </ul>
       <pre class="code-block p-5"><code><span class="tok-k">await</span> Portal.login({ server: <span class="tok-s">''</span>, purpose: <span class="tok-s">'gate:vip'</span> });
 <span class="tok-c">// resolves only once a payment meeting the Gate's minimum is on mainnet</span></code></pre>
@@ -205,7 +206,7 @@ POST /paylinks   { <span class="tok-s">"amount"</span>: <span class="tok-s">"0.0
 
     <section id="api" class="mt-16 reveal">
       <h2 class="text-2xl font-medium mb-4 text-white">HTTP API</h2>
-      <p class="mb-6">Everything the SDK does happens through five endpoints. You can use them directly if you're building something the SDK doesn't cover.</p>
+      <p class="mb-6">Everything the SDK does happens through five endpoints. You can use them directly if you're building something the SDK doesn't cover. The two write endpoints that don't require an existing session, <code>POST /auth/challenge</code> and <code>POST /paylinks</code>, are rate-limited per IP so a single visitor can't flood your instance.</p>
 
       <h3 class="text-lg font-medium mb-2 text-white">Create a challenge</h3>
       <pre class="code-block p-5 mb-2"><code>POST /auth/challenge
@@ -279,6 +280,8 @@ PORTAL_ADDRESS=<span class="tok-s">u1yourshieldedaddress…</span> npm start
             <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_ADDRESS</td><td class="py-3 px-5">Your shielded receiving address. Required.</td></tr>
             <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_JWT_SECRET</td><td class="py-3 px-5">Signing key for session tokens. Random per boot if unset.</td></tr>
             <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_GATE_VIP_AMOUNT</td><td class="py-3 px-5">Price of the demo Gate in ZEC. Defaults to 0.05.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_GATE_VIP_REQUIRE_CONFIRMATION</td><td class="py-3 px-5">Set to <code>1</code> to require a mined confirmation instead of accepting the Gate at 0-conf. Defaults to off.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_DATA_DIR</td><td class="py-3 px-5">Where Paylinks and Shielded Wall posts are persisted to disk. Defaults to <code>server/data</code>.</td></tr>
             <tr><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_ZINGO_ARGS</td><td class="py-3 px-5">Override how the server launches zingo-cli, as a JSON array.</td></tr>
           </tbody>
         </table>
