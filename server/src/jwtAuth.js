@@ -24,7 +24,7 @@ export const JWT_SECRET = loadOrCreateJwtSecret();
 // tokens (index.js's /auth/status token), so a stolen end-user token can never
 // be replayed against creator-only routes and vice versa.
 export function signCreatorToken(creator) {
-  return jwt.sign({ sub: creator.id, role: 'creator', username: creator.username }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ sub: creator.id, role: 'creator' }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 export function requireCreator(req, res, next) {

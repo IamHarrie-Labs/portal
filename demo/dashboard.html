@@ -59,26 +59,12 @@
     <div class="max-w-md mx-auto">
       <h1 class="text-3xl font-medium mb-2 text-center">Creator <span class="serif-accent text-gold">dashboard</span></h1>
       <p class="text-sm text-gray-500 text-center mb-8">Accept payments through this Portal instance under your own address. Gates, Paylinks, and webhooks, all yours.</p>
-      <div class="card p-8">
-        <div class="flex gap-6 mb-6 border-b border-white/5">
-          <button id="tabLogin" class="tab-btn active">Sign in</button>
-          <button id="tabRegister" class="tab-btn">Create account</button>
-        </div>
-
-        <form id="loginForm" class="space-y-3">
-          <input class="field" id="loginUsername" placeholder="Username" autocomplete="username" required>
-          <input class="field" id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" required>
-          <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm w-full">Sign in</button>
-          <p id="loginError" class="err-text hidden"></p>
-        </form>
-
-        <form id="registerForm" class="space-y-3 hidden">
-          <input class="field" id="regUsername" placeholder="Username (3-40 chars)" autocomplete="username" required>
-          <input class="field" id="regPassword" type="password" placeholder="Password (min 8 chars)" autocomplete="new-password" required>
-          <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm w-full">Create account</button>
-          <p class="text-xs text-gray-500">This mints a real Zcash receiving address on our wallet's seed, so it takes a few seconds.</p>
-          <p id="registerError" class="err-text hidden"></p>
-        </form>
+      <div class="card p-8 text-center">
+        <p class="text-sm text-gray-400 mb-6 leading-relaxed">No username, no password. Sign in the same way anyone signs into Portal &mdash; send a zero-value shielded memo from your own wallet. That proof of wallet ownership <span class="serif-accent text-gold">is</span> your account.</p>
+        <button id="walletSignIn" class="btn-gold rounded-full px-6 py-3 text-sm w-full">Sign in with Zcash</button>
+        <p id="authError" class="err-text hidden mt-4"></p>
+        <p class="text-xs text-gray-600 mt-5">First time signing in from this wallet? We mint you a receiving address on the spot &mdash; can take up to a minute.</p>
+        <p class="text-xs text-gray-600 mt-2">Requires a wallet that includes a reply-to address in the memo, like Zashi or Ywallet.</p>
       </div>
     </div>
   </section>
@@ -87,9 +73,12 @@
   <section id="dashboardView" class="hidden">
 
     <div class="card p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
+      <div class="flex-1">
         <div class="text-xs uppercase tracking-widest text-gray-500 mb-1">Signed in as</div>
-        <div class="text-lg font-medium" id="profileUsername">-</div>
+        <form id="profileForm" class="flex items-center gap-2">
+          <input class="field" id="profileDisplayName" placeholder="Add a display name (optional)" style="max-width:220px;">
+          <button type="submit" class="text-gold text-xs whitespace-nowrap hover:underline">save</button>
+        </form>
       </div>
       <div class="flex-1 sm:max-w-md">
         <div class="text-xs uppercase tracking-widest text-gray-500 mb-1">Your receiving address</div>
@@ -161,6 +150,7 @@
 
 </main>
 
+<script src="/sdk/portal.js"></script>
 <script>
 (function () {
   const TOKEN_KEY = 'portal_creator_token';
@@ -191,65 +181,34 @@
     document.getElementById('signOutBtn').classList.remove('hidden');
   }
 
-  // ---- tabs ----
-  document.getElementById('tabLogin').addEventListener('click', () => {
-    document.getElementById('tabLogin').classList.add('active');
-    document.getElementById('tabRegister').classList.remove('active');
-    document.getElementById('loginForm').classList.remove('hidden');
-    document.getElementById('registerForm').classList.add('hidden');
-  });
-  document.getElementById('tabRegister').addEventListener('click', () => {
-    document.getElementById('tabRegister').classList.add('active');
-    document.getElementById('tabLogin').classList.remove('active');
-    document.getElementById('registerForm').classList.remove('hidden');
-    document.getElementById('loginForm').classList.add('hidden');
-  });
-
-  // ---- auth ----
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const err = document.getElementById('loginError');
+  // ---- wallet sign-in ----
+  // Reuses the exact same primitive an end user signs into Portal with:
+  // Portal.login() opens the modal, the creator sends a zero-value memo from
+  // their own wallet, and the server resolves that into a creator account
+  // (auto-created on first sign-in) the moment it's detected. No password.
+  document.getElementById('walletSignIn').addEventListener('click', async () => {
+    const err = document.getElementById('authError');
     err.classList.add('hidden');
     try {
-      const out = await api('/creators/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          username: document.getElementById('loginUsername').value.trim(),
-          password: document.getElementById('loginPassword').value,
-        }),
-      });
-      setToken(out.token);
+      const session = await Portal.login({ server: '', purpose: 'creator-login' });
+      setToken(session.token);
       await loadDashboard();
     } catch (ex) {
-      err.textContent = ex.message;
-      err.classList.remove('hidden');
+      if (ex.message !== 'cancelled') {
+        err.textContent = ex.message;
+        err.classList.remove('hidden');
+      }
     }
   });
 
-  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const err = document.getElementById('registerError');
-    err.classList.add('hidden');
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Creating address…';
     try {
-      const out = await api('/creators/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          username: document.getElementById('regUsername').value.trim(),
-          password: document.getElementById('regPassword').value,
-        }),
+      await api('/creators/me/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({ displayName: document.getElementById('profileDisplayName').value.trim() }),
       });
-      setToken(out.token);
-      await loadDashboard();
-    } catch (ex) {
-      err.textContent = ex.message;
-      err.classList.remove('hidden');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Create account';
-    }
+    } catch {}
   });
 
   document.getElementById('signOutBtn').addEventListener('click', () => {
@@ -286,7 +245,7 @@
   }
 
   function renderProfile(creator) {
-    document.getElementById('profileUsername').textContent = creator.username;
+    document.getElementById('profileDisplayName').value = creator.displayName || '';
     const addrEl = document.getElementById('profileAddress');
     addrEl.textContent = short(creator.address);
     addrEl.dataset.full = creator.address;

@@ -9,7 +9,7 @@ import { startWatcher, selfSendMemo, newAddress } from './watcher.js';
 import { createPaylink, getPaylink, listByCreator } from './paylinks.js';
 import { rateLimit } from './rateLimit.js';
 import { JWT_SECRET, signCreatorToken, requireCreator } from './jwtAuth.js';
-import { createCreator, findByUsername, getCreator, verifyPassword, setWebhookUrl, publicCreator } from './creators.js';
+import { createCreator, findByIdentityHash, getCreator, setDisplayName, setWebhookUrl, publicCreator } from './creators.js';
 import { listGates, getGate, upsertGate, deleteGate } from './gates.js';
 import { isSafeWebhookUrl } from './webhooks.js';
 
@@ -36,6 +36,11 @@ const GATES = {
     label: 'VIP Alpha Access',
     requireConfirmation: process.env.PORTAL_GATE_VIP_REQUIRE_CONFIRMATION === '1',
   },
+  // A creator account is authenticated the exact same way an end user is:
+  // send a zero-value memo with the code. No password, ever. See the
+  // 'creator-login' branch in GET /auth/status/:id for what happens once
+  // it's detected.
+  'creator-login': { amount: '0', label: 'Creator sign-in', requireConfirmation: false },
 };
 
 if (!RECEIVE_ADDRESS) {
@@ -50,8 +55,6 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // Public, unauthenticated endpoints get a generous but real ceiling per IP.
 const challengeRateLimit = rateLimit({ windowMs: 5 * 60_000, max: 40 }); // 40 challenges / 5 min
 const paylinkCreateRateLimit = rateLimit({ windowMs: 10 * 60_000, max: 10 }); // 10 new paylinks / 10 min
-const creatorRegisterRateLimit = rateLimit({ windowMs: 60 * 60_000, max: 5 }); // 5 signups / hour
-const creatorLoginRateLimit = rateLimit({ windowMs: 15 * 60_000, max: 20 }); // 20 attempts / 15 min
 
 function zecToZats(zec) {
   return Math.round(Number(zec) * 1e8);
@@ -88,7 +91,29 @@ app.post('/auth/challenge', challengeRateLimit, async (req, res) => {
   });
 });
 
-app.get('/auth/status/:id', (req, res) => {
+// Concurrent status polls for the same brand-new creator identity must not
+// each independently mint a diversified address — the first poll to detect
+// the payment starts creation, every other poll for the same identity
+// arriving before it finishes just awaits the same in-flight promise.
+const pendingCreatorCreation = new Map(); // identityHash -> Promise<creator>
+
+async function getOrCreateCreator(identityHash) {
+  const existing = findByIdentityHash(identityHash);
+  if (existing) return existing;
+  if (pendingCreatorCreation.has(identityHash)) return pendingCreatorCreation.get(identityHash);
+  const creation = (async () => {
+    const address = await newAddress();
+    return createCreator({ identityHash, address });
+  })();
+  pendingCreatorCreation.set(identityHash, creation);
+  try {
+    return await creation;
+  } finally {
+    pendingCreatorCreation.delete(identityHash);
+  }
+}
+
+app.get('/auth/status/:id', async (req, res) => {
   const c = getChallenge(req.params.id);
   if (!c) return res.status(404).json({ error: 'unknown challenge' });
   const out = { id: c.id, status: c.status, txid: c.txid };
@@ -102,11 +127,32 @@ app.get('/auth/status/:id', (req, res) => {
   // honest "detected" (unconfirmed) state until the token is ready.
   const readyForToken = c.requireConfirmation ? c.status === 'confirmed' : (c.status === 'detected' || c.status === 'confirmed');
   if (readyForToken) {
-    // Pseudonymous subject: hash of reply-to address when provided, else the txid.
-    const subject = c.replyTo
-      ? crypto.createHash('sha256').update(c.replyTo).digest('hex').slice(0, 16)
-      : `anon-${(c.txid ?? c.id).slice(0, 12)}`;
-    out.token = jwt.sign({ sub: subject, portal: c.purpose }, JWT_SECRET, { expiresIn: '24h' });
+    if (c.purpose === 'creator-login') {
+      // Persistence depends on the wallet reusing the same reply-to address
+      // across logins — the same assumption the pseudonymous end-user
+      // subject below already makes, just promoted to a durable account key
+      // instead of a one-off session identity. Wallets that don't include a
+      // reply-to (or rotate it) can't be recognized as a returning creator;
+      // that's a known limitation, documented, not silently papered over.
+      if (!c.replyTo) {
+        out.error = 'Your wallet did not include a reply-to address in the memo. Use Zashi or Ywallet to sign in as a creator.';
+      } else {
+        try {
+          const identityHash = crypto.createHash('sha256').update(c.replyTo).digest('hex').slice(0, 32);
+          const creator = await getOrCreateCreator(identityHash);
+          out.token = signCreatorToken(creator);
+          out.creator = publicCreator(creator);
+        } catch (err) {
+          out.error = `wallet unavailable: ${err.message}`;
+        }
+      }
+    } else {
+      // Pseudonymous subject: hash of reply-to address when provided, else the txid.
+      const subject = c.replyTo
+        ? crypto.createHash('sha256').update(c.replyTo).digest('hex').slice(0, 16)
+        : `anon-${(c.txid ?? c.id).slice(0, 12)}`;
+      out.token = jwt.sign({ sub: subject, portal: c.purpose }, JWT_SECRET, { expiresIn: '24h' });
+    }
   }
   res.json(out);
 });
@@ -154,41 +200,9 @@ app.post('/paylinks/:slug/challenge', challengeRateLimit, async (req, res) => {
 // Each creator gets their own diversified receiving address (see
 // watcher.js#newAddress) so their Gates, Paylinks, and webhooks are fully
 // isolated from the single-operator demo and from each other, without
-// running a separate wallet process per creator.
-
-const USERNAME_RE = /^[a-zA-Z0-9_-]{3,40}$/;
-
-app.post('/creators/register', creatorRegisterRateLimit, async (req, res) => {
-  const username = String(req.body?.username ?? '');
-  const password = String(req.body?.password ?? '');
-  if (!USERNAME_RE.test(username)) {
-    return res.status(400).json({ error: 'username must be 3-40 chars: letters, numbers, underscore, hyphen' });
-  }
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'password must be at least 8 characters' });
-  }
-  if (findByUsername(username)) {
-    return res.status(409).json({ error: 'username already taken' });
-  }
-  let address;
-  try {
-    address = await newAddress();
-  } catch (err) {
-    return res.status(503).json({ error: `wallet unavailable: ${err.message}` });
-  }
-  const creator = createCreator({ username, password, address });
-  res.json({ token: signCreatorToken(creator), creator: publicCreator(creator) });
-});
-
-app.post('/creators/login', creatorLoginRateLimit, (req, res) => {
-  const username = String(req.body?.username ?? '');
-  const password = String(req.body?.password ?? '');
-  const creator = findByUsername(username);
-  if (!creator || !verifyPassword(password, creator.passwordSalt, creator.passwordHash)) {
-    return res.status(401).json({ error: 'invalid username or password' });
-  }
-  res.json({ token: signCreatorToken(creator), creator: publicCreator(creator) });
-});
+// running a separate wallet process per creator. Authentication is the
+// 'creator-login' Gate above — no registration endpoint, no password: the
+// account is created (or recognized) the first time a wallet signs in.
 
 app.get('/creators/me', requireCreator, (req, res) => {
   const creator = getCreator(req.creatorId);
@@ -201,6 +215,13 @@ app.get('/creators/me', requireCreator, (req, res) => {
     totalZats: l.payments.reduce((s, p) => s + (p.valueZats ?? 0), 0),
   }));
   res.json({ creator: publicCreator(creator), gates: listGates(creator.id), paylinks });
+});
+
+app.patch('/creators/me/profile', requireCreator, (req, res) => {
+  const raw = req.body?.displayName;
+  const displayName = raw && String(raw).trim() ? String(raw).trim().slice(0, 60) : null;
+  const creator = setDisplayName(req.creatorId, displayName);
+  res.json({ creator: publicCreator(creator) });
 });
 
 app.patch('/creators/me/webhook', requireCreator, async (req, res) => {

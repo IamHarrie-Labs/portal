@@ -1,58 +1,54 @@
 import crypto from 'node:crypto';
 import { loadJson, saveJson } from './store.js';
 
-// Multi-tenant creator accounts. Each creator gets their own diversified
-// receiving address (new_address oz) carved from the SAME wallet seed as the
-// main operator — no separate wallet process needed, since the persistent
-// zingo-cli session already reports value_transfers across every address the
-// seed controls (see watcher.js). Only the memo/purpose namespace decides
-// which creator a payment belongs to.
+// Multi-tenant creator accounts, authenticated by wallet, not password.
+// A creator "logs in" the same way anyone logs into Portal: send a zero-value
+// shielded memo with a one-time code (purpose `creator-login`, see index.js).
+// The wallet's reply-to address, hashed, is the account key — the same
+// mechanism the end-user pseudonymous Login subject already uses, just
+// promoted from a one-off session identity into a persistent account lookup.
+// First login from a given wallet auto-creates the account (and mints it a
+// diversified receiving address); every later login from the same wallet
+// resolves back to the same account. No usernames, no passwords, no signup
+// form — proving control of the wallet *is* the account.
 const creators = new Map(Object.entries(loadJson('creators.json', {})));
+const byIdentityHash = new Map([...creators.values()].map((c) => [c.identityHash, c]));
 
 function persist() {
   saveJson('creators.json', Object.fromEntries(creators));
 }
 
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-  return { salt, hash };
+export function findByIdentityHash(identityHash) {
+  return byIdentityHash.get(identityHash) ?? null;
 }
 
-export function verifyPassword(password, salt, hash) {
-  const check = crypto.scryptSync(password, salt, 64);
-  const stored = Buffer.from(hash, 'hex');
-  return check.length === stored.length && crypto.timingSafeEqual(check, stored);
-}
-
-export function findByUsername(username) {
-  const key = username.trim().toLowerCase();
-  for (const c of creators.values()) {
-    if (c.username.toLowerCase() === key) return c;
-  }
-  return null;
-}
-
-export function createCreator({ username, password, address }) {
+export function createCreator({ identityHash, address }) {
   const id = crypto.randomUUID();
-  const { salt, hash } = hashPassword(password);
   const creator = {
     id,
-    username: String(username).trim().slice(0, 40),
-    passwordSalt: salt,
-    passwordHash: hash,
+    identityHash,
+    displayName: null,
     address,
     webhookUrl: null,
     webhookSecret: crypto.randomBytes(24).toString('hex'),
     createdAt: Date.now(),
   };
   creators.set(id, creator);
+  byIdentityHash.set(identityHash, creator);
   persist();
   return creator;
 }
 
 export function getCreator(id) {
   return creators.get(id) ?? null;
+}
+
+export function setDisplayName(id, name) {
+  const c = creators.get(id);
+  if (!c) return null;
+  c.displayName = name;
+  persist();
+  return c;
 }
 
 export function setWebhookUrl(id, url) {
@@ -72,5 +68,11 @@ export function rotateWebhookSecret(id) {
 }
 
 export function publicCreator(c) {
-  return { id: c.id, username: c.username, address: c.address, webhookUrl: c.webhookUrl, createdAt: c.createdAt };
+  return {
+    id: c.id,
+    displayName: c.displayName,
+    address: c.address,
+    webhookUrl: c.webhookUrl,
+    createdAt: c.createdAt,
+  };
 }
