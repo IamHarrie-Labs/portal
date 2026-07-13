@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentation · Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M2 28V12C2 5.9 6.9 1 13 1C19.1 1 24 5.9 24 12V28H16V13C16 10.8 14.2 9 12 9C9.8 9 8 10.8 8 13V28H2Z' fill='%23f4b728'/%3E%3C/svg%3E">
+<meta name="description" content="Everything you need to understand, integrate, and self-host Portal: private login, paywalls, and payment links on Zcash.">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/tailwind.css">
+<style>
+  html, body { font-family: 'Inter', sans-serif; background: #060709; overflow-x: hidden; scroll-behavior: smooth; }
+  h1, h2, h3, h4, .font-display { font-family: 'Space Grotesk', sans-serif; }
+  .serif-accent { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .card { background: #0e1017; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
+  .code-block {
+    background: #0a0c11; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+    font-family: ui-monospace, SFMono-Regular, monospace; font-size: 13px; line-height: 1.7;
+    overflow-x: auto;
+  }
+  .code-block .tok-k { color: #f4b728; }
+  .code-block .tok-s { color: #8fd18f; }
+  .code-block .tok-c { color: #626b7a; }
+  .doc-nav a { display: block; padding: 6px 12px; border-radius: 8px; color: #9aa3b2; font-size: 13.5px; transition: color .15s, background .15s; }
+  .doc-nav a:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .doc-prose h2 { scroll-margin-top: 96px; }
+  .doc-prose h3 { scroll-margin-top: 96px; }
+  .doc-prose p, .doc-prose li { color: #a7afbd; font-size: 15px; line-height: 1.75; }
+  .doc-prose strong { color: #f2f3f7; font-weight: 600; }
+  .doc-prose code:not(.code-block code) {
+    background: rgba(244,183,40,0.08); border: 1px solid rgba(244,183,40,0.18);
+    border-radius: 6px; padding: 1px 6px; font-size: 13px; color: #f4b728;
+    font-family: ui-monospace, monospace;
+  }
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  details[open] > summary svg { transform: rotate(180deg); }
+</style>
+</head>
+<body class="text-white">
+
+<nav class="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 border-b border-white/5" style="background: rgba(6,7,9,0.85); backdrop-filter: blur(12px);">
+  <a href="/" class="flex items-center gap-2.5">
+    <svg width="22" height="26" viewBox="0 0 24 28" fill="none"><path d="M2 28V12C2 5.9 6.9 1 13 1C19.1 1 24 5.9 24 12V28H16V13C16 10.8 14.2 9 12 9C9.8 9 8 10.8 8 13V28H2Z" fill="#f4b728"/></svg>
+    <span class="font-display text-lg" style="font-weight:600;">portal</span>
+    <span class="text-gray-600 text-sm mt-0.5">/ docs</span>
+  </a>
+  <div class="flex items-center gap-6 text-sm">
+    <a href="/#demo" class="text-gray-400 hover:text-white transition-colors">Live demo</a>
+    <a href="https://github.com/ZecHub/zechub" target="_blank" rel="noopener" class="text-gray-400 hover:text-white transition-colors">GitHub</a>
+  </div>
+</nav>
+
+<div class="max-w-6xl mx-auto px-4 sm:px-6 md:px-12 py-14 flex gap-12">
+
+  <!-- SIDEBAR -->
+  <aside class="hidden lg:block w-56 flex-shrink-0">
+    <nav class="doc-nav sticky top-24 space-y-6">
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Start here</p>
+        <a href="#overview">What is Portal</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#quickstart">Quickstart</a>
+      </div>
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Products</p>
+        <a href="#login">Login</a>
+        <a href="#gates">Gates</a>
+        <a href="#paylinks">Paylinks</a>
+        <a href="#wall">The Shielded Wall</a>
+      </div>
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Reference</p>
+        <a href="#api">HTTP API</a>
+        <a href="#sdk">JavaScript SDK</a>
+        <a href="#self-hosting">Self-hosting</a>
+      </div>
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Trust</p>
+        <a href="#privacy">Privacy and security</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- CONTENT -->
+  <article class="doc-prose flex-1 min-w-0 max-w-3xl">
+
+    <!-- MOBILE "ON THIS PAGE" NAV -->
+    <details class="lg:hidden mb-10 rounded-xl" style="background:#0e1017; border:1px solid rgba(255,255,255,0.08);">
+      <summary class="px-4 py-3 text-sm font-medium text-white cursor-pointer list-none flex items-center justify-between">
+        On this page
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="transition:transform .2s;"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <nav class="doc-nav px-2 pb-3 grid grid-cols-2 gap-x-2">
+        <a href="#overview">What is Portal</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#quickstart">Quickstart</a>
+        <a href="#login">Login</a>
+        <a href="#gates">Gates</a>
+        <a href="#paylinks">Paylinks</a>
+        <a href="#wall">The Shielded Wall</a>
+        <a href="#api">HTTP API</a>
+        <a href="#sdk">JavaScript SDK</a>
+        <a href="#self-hosting">Self-hosting</a>
+        <a href="#privacy">Privacy and security</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+      </nav>
+    </details>
+
+    <div class="reveal">
+      <h1 class="text-4xl sm:text-5xl font-medium mb-6" style="letter-spacing:-0.03em;">Documentation</h1>
+      <p class="text-lg" style="color:#c3c9d4;">Everything you need to understand, integrate, and run Portal.</p>
+    </div>
+
+    <section id="overview" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">What is Portal</h2>
+      <p class="mb-4">Portal is a small piece of infrastructure that turns a Zcash shielded transaction into a credential. That one idea powers three things: signing into a website, unlocking paid content, and requesting a payment from anyone.</p>
+      <p class="mb-4">Here is the intuition. Every shielded Zcash transaction can carry a private, encrypted note called a <strong>memo</strong>. Only the person receiving the money can read it. So if a website hands you a one-time code, and a payment arrives at the website's address carrying that exact code, the website knows something useful: <span class="serif-accent text-gold">whoever it gave the code to has completed a payment.</span> It knows that with certainty, and it knows nothing else. Not your address. Not your balance. Not your name.</p>
+      <p>That is the entire trick. No new protocol, no browser extension, no wallet changes. It works today with the shielded wallets people already carry: Zashi, Ywallet, and Zingo.</p>
+    </section>
+
+    <section id="how-it-works" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">How it works</h2>
+      <p class="mb-6">A complete round trip has four steps. In practice the whole thing usually takes a few seconds.</p>
+      <ol class="space-y-5 mb-6">
+        <li class="flex gap-4">
+          <span class="font-mono text-gold text-sm pt-1 flex-shrink-0">01</span>
+          <div>
+            <p><strong>Your app requests a challenge.</strong> Portal generates a one-time code, something like <code>PT-K8ZS4T</code>, and wraps it into a standard Zcash payment request (a ZIP-321 URI). You get back a QR code for desktop users and a tap-to-open deep link for mobile users. The code expires after ten minutes if unused.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="font-mono text-gold text-sm pt-1 flex-shrink-0">02</span>
+          <div>
+            <p><strong>The user sends the transaction.</strong> They scan the QR with their wallet. The address, the amount, and the memo are already filled in. They just hit send. For a plain login the amount is zero: Zcash permits zero-value shielded transactions that still carry a memo, so the only cost is the network's standard transaction fee.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="font-mono text-gold text-sm pt-1 flex-shrink-0">03</span>
+          <div>
+            <p><strong>Portal detects it.</strong> A zingolib light client, the same wallet engine behind Zcash's reference wallets, watches the chain and the mempool through a public lightwalletd server. When a new transaction decrypts to a memo containing an active code, it's a match. Because Portal watches the mempool, detection usually happens before the transaction is even mined.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="font-mono text-gold text-sm pt-1 flex-shrink-0">04</span>
+          <div>
+            <p><strong>Your app gets a session.</strong> The status endpoint flips from <code>pending</code> to <code>detected</code> and returns a signed JWT. Your app treats that token exactly like any other session token. The first login is Zcash-native and feels a little magical; everything after it is ordinary web development.</p>
+          </div>
+        </li>
+      </ol>
+      <p>One detail worth appreciating: the person paying and the person holding the browser session are linked only by the code. Portal never learns who sent the transaction, because on Zcash, <span class="serif-accent text-gold">nobody can.</span></p>
+    </section>
+
+    <section id="quickstart" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Quickstart</h2>
+      <p class="mb-4">If a Portal server is already running, integrating takes two steps. Include the SDK, then call it.</p>
+      <pre class="code-block p-5 mb-4"><code><span class="tok-c">&lt;!-- include the SDK from your Portal server --&gt;</span>
+&lt;<span class="tok-k">script</span> src=<span class="tok-s">"https://your-portal-server/sdk/portal.js"</span>&gt;&lt;/<span class="tok-k">script</span>&gt;</code></pre>
+      <pre class="code-block p-5 mb-4"><code><span class="tok-c">// opens the modal, resolves when the mainnet transaction is detected</span>
+<span class="tok-k">const</span> session = <span class="tok-k">await</span> Portal.login({ server: <span class="tok-s">'https://your-portal-server'</span> });
+
+console.log(session.token);  <span class="tok-c">// signed JWT, 24 hour expiry</span>
+console.log(session.txid);   <span class="tok-c">// the real mainnet transaction id</span>
+console.log(session.code);   <span class="tok-c">// the one-time code that was matched</span></code></pre>
+      <p>That's it. The SDK handles the modal, the QR, the mobile deep link, the polling, and the error states. If the user cancels, the promise rejects with <code>cancelled</code>. If the code expires, it rejects with <code>challenge expired</code>.</p>
+    </section>
+
+    <section id="login" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Login</h2>
+      <p class="mb-4">A login challenge is issued with an amount of zero, and the user's wallet sends a zero-value shielded transaction whose only purpose is to deliver the memo.</p>
+      <p class="mb-4">When the transaction is detected, Portal issues a JWT whose subject is derived from the transaction id. Each login produces a fresh, unlinkable identity. That's a deliberate choice: it means even Portal cannot correlate two visits by the same person. If your app needs persistent accounts, treat the Portal session as the authentication step and attach your own account system on top, the same way you would with any single sign-on provider.</p>
+      <p>Sessions last 24 hours. The demo site stores the session in <code>sessionStorage</code> so a page refresh doesn't ask the user to pay the network fee again.</p>
+    </section>
+
+    <section id="gates" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Gates</h2>
+      <p class="mb-4">A Gate is a challenge with a price. Same flow, same modal, same detection, but the server requires a minimum amount before it will issue the token. This is how you build paywalls, memberships, and pay-per-article access with no billing system at all.</p>
+      <p class="mb-4">Two properties make Gates trustworthy:</p>
+      <ul class="space-y-3 mb-4 list-disc pl-5">
+        <li><strong>Pricing is server-authoritative.</strong> A client asks for a purpose, like <code>gate:vip</code>. The server decides what that purpose costs. Sending a request that claims a lower price does nothing; the server ignores it.</li>
+        <li><strong>Underpayment fails loudly.</strong> If someone sends less than the Gate requires, the challenge resolves to <code>underpaid</code> with the exact amounts, and the SDK surfaces a clear message. The code is spent either way, so a partial payment can never be replayed into access.</li>
+      </ul>
+      <pre class="code-block p-5"><code><span class="tok-k">await</span> Portal.login({ server: <span class="tok-s">''</span>, purpose: <span class="tok-s">'gate:vip'</span> });
+<span class="tok-c">// resolves only once a payment meeting the Gate's minimum is on mainnet</span></code></pre>
+    </section>
+
+    <section id="paylinks" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Paylinks</h2>
+      <p class="mb-4">A Paylink is a reusable payment request. You choose an amount and a label, and Portal gives you a short URL like <code>/pay/nqzg9kdw</code>. Anyone who opens it sees a clean payment page, scans, and pays you directly. Many people can pay the same link, which makes it work as a tip jar, an invoice, or a "buy me a coffee" button.</p>
+      <p class="mb-4">Each visitor gets their own fresh one-time code behind the scenes, so payments never collide. Portal records each completed payment against the link and shows a running count on the page.</p>
+      <pre class="code-block p-5"><code><span class="tok-c">// create a link (server side or from your own UI)</span>
+POST /paylinks   { <span class="tok-s">"amount"</span>: <span class="tok-s">"0.001"</span>, <span class="tok-s">"label"</span>: <span class="tok-s">"Coffee tip"</span> }
+<span class="tok-c">// → { "slug": "nqzg9kdw", "url": "/pay/nqzg9kdw", ... }</span>
+
+<span class="tok-c">// or drive the payment yourself with the SDK</span>
+<span class="tok-k">await</span> Portal.pay({ server: <span class="tok-s">''</span>, slug: <span class="tok-s">'nqzg9kdw'</span> });</code></pre>
+    </section>
+
+    <section id="wall" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">The Shielded Wall</h2>
+      <p class="mb-4">The Wall is a small demonstration with a big point. If you add any text after the code in your login memo, that text becomes a public post on the demo site. Which means every message on the Wall traveled through the Zcash mainnet inside an encrypted memo, was decrypted by Portal's keys, and was published without anyone knowing who wrote it.</p>
+      <p>It exists to make the mechanism visible. When you watch a sentence appear on the Wall seconds after you hit send in your wallet, you understand exactly what Portal is doing under the hood.</p>
+    </section>
+
+    <section id="api" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">HTTP API</h2>
+      <p class="mb-6">Everything the SDK does happens through five endpoints. You can use them directly if you're building something the SDK doesn't cover.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Create a challenge</h3>
+      <pre class="code-block p-5 mb-2"><code>POST /auth/challenge
+{ <span class="tok-s">"purpose"</span>: <span class="tok-s">"login"</span> }   <span class="tok-c">// or "gate:vip"</span></code></pre>
+      <pre class="code-block p-5 mb-6"><code><span class="tok-c">// response</span>
+{
+  <span class="tok-s">"id"</span>: <span class="tok-s">"53aa96d3-…"</span>,        <span class="tok-c">// poll this</span>
+  <span class="tok-s">"code"</span>: <span class="tok-s">"PT-2HFGH5"</span>,       <span class="tok-c">// the one-time code</span>
+  <span class="tok-s">"amount"</span>: <span class="tok-s">"0"</span>,             <span class="tok-c">// server-decided, never client-decided</span>
+  <span class="tok-s">"uri"</span>: <span class="tok-s">"zcash:u1…?amount=0&amp;memo=…"</span>,
+  <span class="tok-s">"qr"</span>: <span class="tok-s">"data:image/png;base64,…"</span>,
+  <span class="tok-s">"expiresAt"</span>: 1783822655044
+}</code></pre>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Poll for the result</h3>
+      <pre class="code-block p-5 mb-6"><code>GET /auth/status/:id
+
+<span class="tok-c">// pending → detected → confirmed. On detection:</span>
+{ <span class="tok-s">"status"</span>: <span class="tok-s">"detected"</span>, <span class="tok-s">"txid"</span>: <span class="tok-s">"…"</span>, <span class="tok-s">"token"</span>: <span class="tok-s">"eyJhbGciOi…"</span> }
+
+<span class="tok-c">// if a Gate was underpaid:</span>
+{ <span class="tok-s">"status"</span>: <span class="tok-s">"underpaid"</span>, <span class="tok-s">"requiredZats"</span>: 5000000, <span class="tok-s">"receivedZats"</span>: 100000 }</code></pre>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Paylinks and the Wall</h3>
+      <pre class="code-block p-5"><code>POST /paylinks                    <span class="tok-c">// create a payment request</span>
+GET  /paylinks/:slug              <span class="tok-c">// amount, label, payment count</span>
+POST /paylinks/:slug/challenge    <span class="tok-c">// fresh challenge for one payment</span>
+GET  /wall                        <span class="tok-c">// Shielded Wall posts</span></code></pre>
+    </section>
+
+    <section id="sdk" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">JavaScript SDK</h2>
+      <p class="mb-4">The SDK is a single dependency-free file. It exposes four functions on <code>window.Portal</code>.</p>
+      <div class="card overflow-hidden mb-4">
+        <table class="w-full text-sm">
+          <tbody style="color:#a7afbd;">
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold whitespace-nowrap">Portal.login(opts)</td><td class="py-3 px-5">Opens the modal, resolves with <code>{ token, txid, code }</code> once detected. Pass <code>purpose</code> for a Gate.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold whitespace-nowrap">Portal.pay(opts)</td><td class="py-3 px-5">Same flow for a Paylink. Requires <code>slug</code>.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold whitespace-nowrap">Portal.receiptPng(s)</td><td class="py-3 px-5">Renders a downloadable receipt card as a PNG data URL.</td></tr>
+            <tr><td class="py-3 px-5 font-mono text-xs text-gold whitespace-nowrap">Portal.explorerUrl(txid)</td><td class="py-3 px-5">Link to the transaction on a public block explorer. Spoiler: the explorer shows nothing, and that's the point.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>On desktop the modal shows a QR code. On mobile it shows a tap-to-open button that launches the user's wallet with everything pre-filled. You don't have to think about which is which.</p>
+    </section>
+
+    <section id="self-hosting" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Self-hosting</h2>
+      <p class="mb-4">Portal is two processes: a Node server and a zingolib wallet sidecar. There is no database and no full node. The wallet connects to a public lightwalletd server, so it is synced and useful within a minute of first launch.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">1. Build the wallet sidecar</h3>
+      <p class="mb-3">You need Rust and, on Linux, the usual build tools plus <code>protobuf-compiler</code>.</p>
+      <pre class="code-block p-5 mb-6"><code>git clone https://github.com/zingolabs/zingolib
+<span class="tok-k">cd</span> zingolib
+cargo build --release --package zingo-cli</code></pre>
+
+      <h3 class="text-lg font-medium mb-2 text-white">2. Create the wallet</h3>
+      <pre class="code-block p-5 mb-3"><code>./target/release/zingo-cli --data-dir ~/.portal-wallet --nosync addresses
+<span class="tok-c"># prints your shielded receiving address (starts with u1…)</span></code></pre>
+      <p class="mb-6"><strong>Back up the seed phrase immediately</strong> with the <code>recovery_info</code> command. If your Gates or Paylinks collect real money, this wallet is real custody.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">3. Run the server</h3>
+      <pre class="code-block p-5 mb-4"><code><span class="tok-k">cd</span> server &amp;&amp; npm install
+PORTAL_ADDRESS=<span class="tok-s">u1yourshieldedaddress…</span> npm start
+<span class="tok-c"># Portal auth server listening on http://localhost:8787</span></code></pre>
+
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b border-white/10 text-left text-gray-500"><th class="py-3 px-5 font-medium">Variable</th><th class="py-3 px-5 font-medium">What it does</th></tr></thead>
+          <tbody style="color:#a7afbd;">
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_ADDRESS</td><td class="py-3 px-5">Your shielded receiving address. Required.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_JWT_SECRET</td><td class="py-3 px-5">Signing key for session tokens. Random per boot if unset.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_GATE_VIP_AMOUNT</td><td class="py-3 px-5">Price of the demo Gate in ZEC. Defaults to 0.05.</td></tr>
+            <tr><td class="py-3 px-5 font-mono text-xs text-gold">PORTAL_ZINGO_ARGS</td><td class="py-3 px-5">Override how the server launches zingo-cli, as a JSON array.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="privacy" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Privacy and security</h2>
+      <p class="mb-4">It helps to be precise about what each party learns.</p>
+      <ul class="space-y-3 mb-4 list-disc pl-5">
+        <li><strong>The website using Portal</strong> learns one bit: a valid payment carrying the code it requested arrived on mainnet. Plus the amount, if it set one.</li>
+        <li><strong>Portal's server</strong> learns the same, and sees the memo contents, because the memo was addressed to its wallet. It never learns the sender's address. Zcash's shielded protocol hides that from the recipient by design.</li>
+        <li><strong>The public chain</strong> shows that a shielded transaction happened. Sender, receiver, amount, and memo are all encrypted. Look up any Portal login on a block explorer and you will find <span class="serif-accent text-gold">nothing.</span></li>
+      </ul>
+      <p class="mb-4">Codes are single-use and expire after ten minutes. A replayed or reused code matches nothing. Gate prices live only on the server, so no client can talk the price down. All of this is ordinary, boring security design, which is exactly what you want.</p>
+      <p>One honest limitation: Portal's server holds the wallet's viewing and spending keys, so treat the host machine the way you would treat any hot wallet host.</p>
+    </section>
+
+    <section id="troubleshooting" class="mt-16 reveal mb-24">
+      <h2 class="text-2xl font-medium mb-4 text-white">Troubleshooting</h2>
+      <div class="space-y-6">
+        <div>
+          <h3 class="text-base font-medium text-white mb-1">The modal says "watching mainnet" forever.</h3>
+          <p>Most often the wallet sent the payment without the memo. The memo is the credential; without it, Portal sees an anonymous payment and correctly matches it to nothing. Use the QR or deep link rather than typing the address by hand, and confirm your wallet shows a memo field before sending.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-medium text-white mb-1">My wallet has no memo field.</h3>
+          <p>Some multi-coin wallets support shielded sending but never built memo entry. Unstoppable is a known example. Use a Zcash-native wallet: Zashi and Ywallet both show the memo pre-filled when they scan a Portal QR.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-medium text-white mb-1">The challenge expired before I paid.</h3>
+          <p>Codes live for ten minutes. Close the modal and start again; a fresh code costs nothing.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-medium text-white mb-1">I paid a Gate but sent too little.</h3>
+          <p>The status resolves to <code>underpaid</code> with the exact required and received amounts. That code is now spent. Request a new challenge and send the full amount. The earlier partial payment is not lost; it arrived at the server's wallet, but it cannot be upgraded into access.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-medium text-white mb-1">How fast is detection, really?</h3>
+          <p>Portal polls the mempool through its light client every few seconds, so detection typically lands well before the transaction is mined. End to end, expect a few seconds from wallet send to session token. Zcash mainnet blocks arrive roughly every 75 seconds; you are not waiting for one.</p>
+        </div>
+      </div>
+    </section>
+
+  </article>
+</div>
+
+<footer class="px-4 sm:px-6 md:px-12 py-10 border-t border-white/5">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-2">
+      <svg width="18" height="21" viewBox="0 0 24 28" fill="none"><path d="M2 28V12C2 5.9 6.9 1 13 1C19.1 1 24 5.9 24 12V28H16V13C16 10.8 14.2 9 12 9C9.8 9 8 10.8 8 13V28H2Z" fill="#f4b728"/></svg>
+      <span class="font-display text-sm" style="font-weight:600;">portal</span>
+    </a>
+    <div class="flex gap-6 text-sm text-gray-500">
+      <a href="/" class="hover:text-gray-300">Home</a>
+      <a href="/#demo" class="hover:text-gray-300">Live demo</a>
+      <a href="https://github.com/ZecHub/zechub" target="_blank" rel="noopener" class="hover:text-gray-300">GitHub</a>
+    </div>
+    <p class="text-xs text-gray-600">© 2026 Portal · ZecHub Hackathon 3.0</p>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

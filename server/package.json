@@ -1,0 +1,20 @@
+{
+  "name": "@portal-zec/server",
+  "version": "0.1.0",
+  "description": "Portal auth server - Sign in with Zcash via shielded memo detection on mainnet",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}
