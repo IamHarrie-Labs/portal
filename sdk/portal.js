@@ -127,9 +127,7 @@
       timer = setInterval(async () => {
         try {
           const s = await (await fetch(`${server}/auth/status/${ch.id}`)).json();
-          if (s.status === 'detected') setStage('Transaction detected on mainnet, finalizing…');
-          else if (s.status === 'pending') setStage('Watching Zcash mainnet…');
-          else if (s.status === 'expired') { cleanup(); reject(new Error('challenge expired')); return; }
+          if (s.status === 'expired') { cleanup(); reject(new Error('challenge expired')); return; }
           else if (s.status === 'underpaid') {
             cleanup();
             const got = (s.receivedZats / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '');
@@ -137,6 +135,15 @@
             reject(new Error(`underpaid: sent ${got} ZEC, needed ${need} ZEC. Request a new code and resend the full amount.`));
             return;
           }
+          // s.error is a per-poll condition (e.g. a creator-login memo missing
+          // its reply-to address) — surface it instead of silently sitting on
+          // a generic "finalizing" message forever. It isn't necessarily
+          // terminal (a transient wallet hiccup can clear on a later poll),
+          // so keep polling rather than rejecting outright; Cancel is always
+          // available if it doesn't.
+          else if (s.error) setStage(s.error);
+          else if (s.status === 'detected') setStage('Transaction detected on mainnet, finalizing…');
+          else if (s.status === 'pending') setStage('Watching Zcash mainnet…');
           if (s.token) {
             setStage('Done ✓');
             cleanup();
