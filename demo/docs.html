@@ -80,6 +80,7 @@
       <div>
         <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Trust</p>
         <a href="#privacy">Privacy and security</a>
+        <a href="#trust-model">Trust model and roadmap</a>
         <a href="#troubleshooting">Troubleshooting</a>
       </div>
     </nav>
@@ -107,6 +108,7 @@
         <a href="#sdk">JavaScript SDK</a>
         <a href="#self-hosting">Self-hosting</a>
         <a href="#privacy">Privacy and security</a>
+        <a href="#trust-model">Trust model and roadmap</a>
         <a href="#troubleshooting">Troubleshooting</a>
       </nav>
     </details>
@@ -331,6 +333,29 @@ PORTAL_ADDRESS=<span class="tok-s">u1yourshieldedaddress…</span> npm start
       </ul>
       <p class="mb-4">Codes are single-use and expire after ten minutes. A replayed or reused code matches nothing. Gate prices live only on the server, so no client can talk the price down. All of this is ordinary, boring security design, which is exactly what you want.</p>
       <p>One honest limitation: Portal's server holds the wallet's viewing and spending keys, so treat the host machine the way you would treat any hot wallet host.</p>
+    </section>
+
+    <section id="trust-model" class="mt-16 reveal">
+      <h2 class="text-2xl font-medium mb-4 text-white">Trust model and roadmap</h2>
+      <p class="mb-4">Portal is built on real cryptography, and the parts that are not yet trustless are stated here rather than hidden. Each one has a designed fix, and together they are the roadmap.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Custody</h3>
+      <p class="mb-4">Creator receiving addresses are diversified addresses derived from this instance's own wallet seed. They are unlinkable on chain, but the operator's keys can spend them, so today a creator trusts the operator to forward their funds, the same arrangement as an early hot wallet payment processor. The fix is Unified Full Viewing Keys: a creator hands Portal a viewing key for their own wallet, Portal can then see payments arrive but can never spend them, and money lands directly in the creator's wallet with no custody at all.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Identity</h3>
+      <p class="mb-4">Shielded Zcash has no protocol level sender field, so a creator's identity is the reply address in their login memo. Portal verifies that a real shielded transaction carried the claim, but not that the sender owns the claimed address. The fix is a reply handshake: Portal sends an encrypted memo containing a secret back to the claimed address, and only the true owner can read it and echo it back, because a shielded memo can only be decrypted by its recipient. That proves ownership while revealing nothing on chain, since fully shielded transactions hide sender, receiver, amount, and memo from every observer.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">Availability</h3>
+      <p class="mb-4">One wallet process watches the chain for the whole instance. Commands are serialized and the process is crash hardened, but a production deployment would run redundant watchers behind a health check.</p>
+
+      <h3 class="text-lg font-medium mb-2 text-white">What comes next</h3>
+      <ul class="space-y-3 mb-4 list-disc pl-5">
+        <li>The reply handshake, so a claimed address becomes a proven address.</li>
+        <li>Viewing key based creator accounts, removing custody entirely.</li>
+        <li>Pay from any chain and settle in ZEC through NEAR Intents, so a payer does not need to hold ZEC to pay a Paylink.</li>
+        <li>An automated test suite over the memo parser, the challenge lifecycle, and webhook signing.</li>
+      </ul>
+      <p>These tradeoffs were the right ones for version one because they made a complete, working product possible on mainnet. Knowing exactly where the seams are is how they get closed.</p>
     </section>
 
     <section id="troubleshooting" class="mt-16 reveal mb-24">
