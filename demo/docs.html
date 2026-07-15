@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Documentation · Portal</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M2 28V12A10 10 0 0 1 22 12V28H2Z' fill='%23f4b728' stroke='%2314100a' stroke-width='0.6'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M2 28V12A10 10 0 0 1 22 12V28H2Z' fill='%23f4b728'/%3E%3C/svg%3E">
 <meta name="description" content="Everything you need to understand, integrate, and self-host Portal: private login, paywalls, and payment links on Zcash.">
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/tailwind.css">
@@ -35,19 +35,57 @@
   .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
   .reveal.in { opacity: 1; transform: translateY(0); }
   details[open] > summary svg { transform: rotate(180deg); }
+
+  .nav-ctl {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: inherit;
+    border-radius: 9999px; font-size: 13px; padding: 7px 14px; cursor: pointer; font-family: inherit;
+  }
+  .nav-ctl:hover { background: rgba(255,255,255,0.12); }
+  select.nav-ctl { appearance: none; -webkit-appearance: none; padding-right: 26px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23999' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; }
+  select.nav-ctl option { background: #0e1017; color: #f2f3f7; }
+
+  body.light { background: #f7f5f1; color: #14100a; }
+  body.light nav, body.light footer { background: rgba(247,245,241,0.9) !important; border-color: rgba(20,16,10,0.08) !important; }
+  body.light .card { background: #ffffff; border-color: rgba(20,16,10,0.10); }
+  body.light .code-block { background: #f3f1ec; border-color: rgba(20,16,10,0.10); }
+  body.light .code-block .tok-c { color: #8b8578; }
+  body.light .doc-nav a { color: #6f6a60; }
+  body.light .doc-nav a:hover { color: #14100a; background: rgba(20,16,10,0.05); }
+  body.light .doc-prose p, body.light .doc-prose li { color: #3f3b33; }
+  body.light .doc-prose strong { color: #14100a; }
+  body.light .text-white { color: #14100a; }
+  body.light .text-gray-400 { color: #57534a; }
+  body.light .text-gray-500 { color: #6f6a60; }
+  body.light .text-gray-600 { color: #8b8578; }
+  body.light select.nav-ctl { background-color: rgba(20,16,10,0.05); border-color: rgba(20,16,10,0.15); color: #14100a; }
+  body.light select.nav-ctl option { background: #fff; color: #14100a; }
+  body.light .nav-ctl { background: rgba(20,16,10,0.05); border-color: rgba(20,16,10,0.15); color: #14100a; }
 </style>
 </head>
 <body class="text-white">
+<script>
+  try { if (localStorage.getItem('portal_theme') === 'light') document.body.classList.add('light'); } catch {}
+</script>
 
 <nav class="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 border-b border-white/5" style="background: rgba(6,7,9,0.85); backdrop-filter: blur(12px);">
   <a href="/" class="flex items-end gap-2.5">
-    <svg width="22" height="26" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728" stroke="#14100a" stroke-width="0.6"/></svg>
+    <svg width="22" height="26" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728"/></svg>
     <span class="font-display text-lg leading-none" style="font-weight:600;">portal</span>
     <span class="text-gray-600 text-sm leading-none">/ docs</span>
   </a>
-  <div class="flex items-center gap-6 text-sm">
-    <a href="/#demo" class="text-gray-400 hover:text-white transition-colors">Live demo</a>
-    <a href="/dashboard.html" class="text-gray-400 hover:text-white transition-colors">Dashboard</a>
+  <div class="flex items-center gap-4 sm:gap-6 text-sm">
+    <select id="langSel" class="nav-ctl" aria-label="Language">
+      <option value="en">EN</option>
+      <option value="es">ES</option>
+      <option value="fr">FR</option>
+    </select>
+    <button id="themeToggle" class="nav-ctl flex items-center justify-center" style="width:38px; height:34px; padding:0;" aria-label="Toggle light or dark mode">
+      <svg id="iconMoon" width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg id="iconSun" width="15" height="15" viewBox="0 0 24 24" fill="none" class="hidden"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <a href="/dashboard" data-i18n="navDashboard" class="text-gray-400 hover:text-white transition-colors">Dashboard</a>
     <a href="https://github.com/IamHarrie-Labs/portal" target="_blank" rel="noopener" class="text-gray-400 hover:text-white transition-colors">GitHub</a>
   </div>
 </nav>
@@ -58,13 +96,13 @@
   <aside class="hidden lg:block w-56 flex-shrink-0">
     <nav class="doc-nav sticky top-24 space-y-6">
       <div>
-        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Start here</p>
+        <p data-i18n="tocStart" class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Start here</p>
         <a href="#overview">What is Portal</a>
         <a href="#how-it-works">How it works</a>
         <a href="#quickstart">Quickstart</a>
       </div>
       <div>
-        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Products</p>
+        <p data-i18n="tocProducts" class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Products</p>
         <a href="#login">Login</a>
         <a href="#gates">Gates</a>
         <a href="#paylinks">Paylinks</a>
@@ -72,13 +110,13 @@
         <a href="#creators">Creator accounts</a>
       </div>
       <div>
-        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Reference</p>
+        <p data-i18n="tocReference" class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Reference</p>
         <a href="#api">HTTP API</a>
         <a href="#sdk">JavaScript SDK</a>
         <a href="#self-hosting">Self-hosting</a>
       </div>
       <div>
-        <p class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Trust</p>
+        <p data-i18n="tocTrust" class="text-xs uppercase tracking-widest text-gray-600 px-3 mb-2">Trust</p>
         <a href="#privacy">Privacy and security</a>
         <a href="#trust-model">Trust model and roadmap</a>
         <a href="#troubleshooting">Troubleshooting</a>
@@ -92,7 +130,7 @@
     <!-- MOBILE "ON THIS PAGE" NAV -->
     <details class="lg:hidden mb-10 rounded-xl" style="background:#0e1017; border:1px solid rgba(255,255,255,0.08);">
       <summary class="px-4 py-3 text-sm font-medium text-white cursor-pointer list-none flex items-center justify-between">
-        On this page
+        <span data-i18n="onThisPage">On this page</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="transition:transform .2s;"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </summary>
       <nav class="doc-nav px-2 pb-3 grid grid-cols-2 gap-x-2">
@@ -114,15 +152,16 @@
     </details>
 
     <div class="reveal">
-      <h1 class="text-4xl sm:text-5xl font-medium mb-6" style="letter-spacing:-0.03em;">Documentation</h1>
-      <p class="text-lg" style="color:#c3c9d4;">Everything you need to understand, integrate, and run Portal.</p>
+      <h1 data-i18n="docsTitle" class="text-4xl sm:text-5xl font-medium mb-6" style="letter-spacing:-0.03em;">Documentation</h1>
+      <p data-i18n="docsSubtitle" class="text-lg" style="color:#c3c9d4;">Everything you need to understand, integrate, and run Portal.</p>
     </div>
 
     <section id="overview" class="mt-16 reveal">
       <h2 class="text-2xl font-medium mb-4 text-white">What is Portal</h2>
       <p class="mb-4">Portal is a small piece of infrastructure that turns a Zcash shielded transaction into a credential. That one idea powers three things: signing into a website, unlocking paid content, and requesting a payment from anyone.</p>
       <p class="mb-4">Here is the intuition. Every shielded Zcash transaction can carry a private, encrypted note called a <strong>memo</strong>. Only the person receiving the money can read it. So if a website hands you a one-time code, and a payment arrives at the website's address carrying that exact code, the website knows something useful: <span class="serif-accent text-gold">whoever it gave the code to has completed a payment.</span> It knows that with certainty, and it knows nothing else. Not your address. Not your balance. Not your name.</p>
-      <p>That is the entire trick. No new protocol, no browser extension, no wallet changes. It works today with the shielded wallets people already carry: Zashi, Ywallet, and Zingo.</p>
+      <p class="mb-4">That is the entire trick. No new protocol, no browser extension, no wallet changes. It works today with the shielded wallets people already carry: Zashi, Ywallet, and Zingo.</p>
+      <p>A live instance is running right now at <a href="https://tryportal.xyz" class="text-gold hover:underline">tryportal.xyz</a>. Everything below works against it, and Portal is also yours to self-host, see <a href="#self-hosting" class="text-gold hover:underline">Self-hosting</a>.</p>
     </section>
 
     <section id="how-it-works" class="mt-16 reveal">
@@ -159,11 +198,11 @@
 
     <section id="quickstart" class="mt-16 reveal">
       <h2 class="text-2xl font-medium mb-4 text-white">Quickstart</h2>
-      <p class="mb-4">If a Portal server is already running, integrating takes two steps. Include the SDK, then call it.</p>
+      <p class="mb-4">If a Portal server is already running, integrating takes two steps. Include the SDK, then call it. The example below points at the live instance at <code>tryportal.xyz</code>, swap in your own server if you are self-hosting.</p>
       <pre class="code-block p-5 mb-4"><code><span class="tok-c">&lt;!-- include the SDK from your Portal server --&gt;</span>
-&lt;<span class="tok-k">script</span> src=<span class="tok-s">"https://your-portal-server/sdk/portal.js"</span>&gt;&lt;/<span class="tok-k">script</span>&gt;</code></pre>
+&lt;<span class="tok-k">script</span> src=<span class="tok-s">"https://tryportal.xyz/sdk/portal.js"</span>&gt;&lt;/<span class="tok-k">script</span>&gt;</code></pre>
       <pre class="code-block p-5 mb-4"><code><span class="tok-c">// opens the modal, resolves when the mainnet transaction is detected</span>
-<span class="tok-k">const</span> session = <span class="tok-k">await</span> Portal.login({ server: <span class="tok-s">'https://your-portal-server'</span> });
+<span class="tok-k">const</span> session = <span class="tok-k">await</span> Portal.login({ server: <span class="tok-s">'https://tryportal.xyz'</span> });
 
 console.log(session.token);  <span class="tok-c">// signed JWT, 24 hour expiry</span>
 console.log(session.txid);   <span class="tok-c">// the real mainnet transaction id</span>
@@ -390,12 +429,12 @@ PORTAL_ADDRESS=<span class="tok-s">u1yourshieldedaddress…</span> npm start
 <footer class="px-4 sm:px-6 md:px-12 py-10 border-t border-white/5">
   <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
     <a href="/" class="flex items-end gap-2">
-      <svg width="18" height="21" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728" stroke="#14100a" stroke-width="0.6"/></svg>
+      <svg width="18" height="21" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728"/></svg>
       <span class="font-display text-sm leading-none" style="font-weight:600;">portal</span>
     </a>
     <div class="flex gap-6 text-sm text-gray-500">
-      <a href="/" class="hover:text-gray-300">Home</a>
-      <a href="/#demo" class="hover:text-gray-300">Live demo</a>
+      <a href="/" data-i18n="footHome" class="hover:text-gray-300">Home</a>
+      <a href="/dashboard" data-i18n="navDashboard" class="hover:text-gray-300">Dashboard</a>
       <a href="https://github.com/IamHarrie-Labs/portal" target="_blank" rel="noopener" class="hover:text-gray-300">GitHub</a>
     </div>
     <p class="text-xs text-gray-600">© 2026 Portal</p>
@@ -407,6 +446,58 @@ PORTAL_ADDRESS=<span class="tok-s">u1yourshieldedaddress…</span> npm start
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
   }, { threshold: 0.1 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ---- language (chrome only; the long-form documentation body stays English) ----
+  const I18N = {
+    en: {
+      navDashboard: 'Dashboard', tocStart: 'Start here', tocProducts: 'Products', tocReference: 'Reference', tocTrust: 'Trust',
+      onThisPage: 'On this page', docsTitle: 'Documentation', docsSubtitle: 'Everything you need to understand, integrate, and run Portal.',
+      footHome: 'Home',
+    },
+    es: {
+      navDashboard: 'Panel', tocStart: 'Comienza aquí', tocProducts: 'Productos', tocReference: 'Referencia', tocTrust: 'Confianza',
+      onThisPage: 'En esta página', docsTitle: 'Documentación', docsSubtitle: 'Todo lo que necesitas para entender, integrar y ejecutar Portal.',
+      footHome: 'Inicio',
+    },
+    fr: {
+      navDashboard: 'Tableau de bord', tocStart: 'Commencer ici', tocProducts: 'Produits', tocReference: 'Référence', tocTrust: 'Confiance',
+      onThisPage: 'Sur cette page', docsTitle: 'Documentation', docsSubtitle: 'Tout ce dont vous avez besoin pour comprendre, intégrer et exécuter Portal.',
+      footHome: 'Accueil',
+    },
+  };
+  let lang = 'en';
+  try { lang = localStorage.getItem('portal_lang') || 'en'; } catch {}
+  if (!I18N[lang]) lang = 'en';
+  const langSel = document.getElementById('langSel');
+  langSel.value = lang;
+  function applyLang() {
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.dataset.i18n;
+      if (I18N[lang][key]) el.textContent = I18N[lang][key];
+    });
+  }
+  langSel.addEventListener('change', () => {
+    lang = langSel.value;
+    try { localStorage.setItem('portal_lang', lang); } catch {}
+    applyLang();
+  });
+  applyLang();
+
+  // ---- light / dark toggle ----
+  const themeToggle = document.getElementById('themeToggle');
+  const iconSun = document.getElementById('iconSun');
+  const iconMoon = document.getElementById('iconMoon');
+  function applyThemeIcon() {
+    const light = document.body.classList.contains('light');
+    iconSun.classList.toggle('hidden', !light);
+    iconMoon.classList.toggle('hidden', light);
+  }
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('light');
+    try { localStorage.setItem('portal_theme', document.body.classList.contains('light') ? 'light' : 'dark'); } catch {}
+    applyThemeIcon();
+  });
+  applyThemeIcon();
 </script>
 </body>
 </html>

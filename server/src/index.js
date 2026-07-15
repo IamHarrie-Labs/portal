@@ -11,7 +11,7 @@ import { rateLimit } from './rateLimit.js';
 import { JWT_SECRET, signCreatorToken, requireCreator } from './jwtAuth.js';
 import { createCreator, findByIdentityHash, getCreator, setDisplayName, setWebhookUrl, publicCreator } from './creators.js';
 import { listGates, getGate, upsertGate, deleteGate } from './gates.js';
-import { isSafeWebhookUrl } from './webhooks.js';
+import { isSafeWebhookUrl, getDeliveries } from './webhooks.js';
 
 const PORT = process.env.PORT ?? 8787;
 // The server's shielded receiving address (unified address). Set via env once the
@@ -217,8 +217,13 @@ app.get('/creators/me', requireCreator, (req, res) => {
     label: l.label,
     paymentCount: l.payments.length,
     totalZats: l.payments.reduce((s, p) => s + (p.valueZats ?? 0), 0),
+    payments: l.payments.map((p) => ({ valueZats: p.valueZats, at: p.at })),
   }));
   res.json({ creator: publicCreator(creator), gates: listGates(creator.id), paylinks });
+});
+
+app.get('/creators/me/webhooks/deliveries', requireCreator, (req, res) => {
+  res.json({ deliveries: getDeliveries(req.creatorId) });
 });
 
 app.patch('/creators/me/profile', requireCreator, (req, res) => {
@@ -330,7 +335,7 @@ if (process.env.PORTAL_DEBUG === '1') {
 
 // Static hosting for the SDK and demo app.
 app.use('/sdk', express.static(path.join(root, '..', 'sdk')));
-app.use('/', express.static(path.join(root, '..', 'demo')));
+app.use('/', express.static(path.join(root, '..', 'demo'), { extensions: ['html'] }));
 
 setInterval(sweepExpired, 60_000);
 

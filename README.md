@@ -73,7 +73,7 @@ cd server && npm install
 PORTAL_ADDRESS=u1yourshieldedaddress npm start
 ```
 
-The full walkthrough, every environment variable, and the HTTP API live in the documentation served at `/docs.html`.
+The full walkthrough, every environment variable, and the HTTP API live in the documentation served at `/docs`. A live instance is running at [tryportal.xyz](https://tryportal.xyz), with docs at [tryportal.xyz/docs](https://tryportal.xyz/docs).
 
 ## License
 

@@ -4,222 +4,325 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard · Portal</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M2 28V12A10 10 0 0 1 22 12V28H2Z' fill='%23f4b728' stroke='%2314100a' stroke-width='0.6'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M2 28V12A10 10 0 0 1 22 12V28H2Z' fill='%23f4b728'/%3E%3C/svg%3E">
 <meta name="description" content="Manage your Portal account: Paylinks, Gates, and webhooks.">
-<link rel="stylesheet" href="/assets/fonts/fonts.css">
-<link rel="stylesheet" href="/assets/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  html, body { font-family: 'Inter', sans-serif; background: #060709; overflow-x: hidden; scroll-behavior: smooth; }
-  h1, h2, h3, .font-display { font-family: 'Space Grotesk', sans-serif; }
-  .serif-accent { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
-  .card { background: #0e1017; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
-  .btn-gold { background: linear-gradient(120deg, #f7931a 0%, #f4b728 65%); color: #14100a; font-weight: 600; }
-  .btn-gold:hover { filter: brightness(1.06); }
-  .btn-ghost { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #f2f3f7; }
-  .btn-ghost:hover { background: rgba(255,255,255,0.08); }
-  input.field {
-    background: #0a0c11; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-    padding: 9px 13px; color: #f2f3f7; font-family: inherit; font-size: 13.5px; outline: none; width: 100%;
+  :root {
+    --bg: oklch(0.16 0.006 95);
+    --surface: oklch(0.205 0.007 95);
+    --surface2: oklch(0.255 0.009 95);
+    --border: oklch(1 0 0/0.08);
+    --text: oklch(0.95 0.004 95);
+    --muted: oklch(0.62 0.012 95);
+    --faint: oklch(0.46 0.012 95);
+    --accent: oklch(0.78 0.15 65);
+    --accent-strong: oklch(0.83 0.15 65);
+    --accent-ink: oklch(0.22 0.03 65);
+    --radius: 12px;
+    --ok-bg: oklch(0.32 0.06 150); --ok-text: oklch(0.8 0.14 150);
+    --err-bg: oklch(0.32 0.08 25); --err-text: oklch(0.78 0.16 25);
+    --pending-bg: oklch(0.32 0.05 80); --pending-text: oklch(0.78 0.13 80);
   }
-  input.field:focus { border-color: rgba(244,183,40,0.5); }
-  label.check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #a7afbd; }
-  .stat-card { background: #0e1017; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px 18px; }
-  .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 600; color: #fff; }
-  .stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
-  .bar-row { display: grid; grid-template-columns: 120px 1fr 90px; gap: 12px; align-items: center; font-size: 13px; }
-  .bar-track { background: rgba(255,255,255,0.05); border-radius: 6px; height: 10px; overflow: hidden; }
-  .bar-fill { height: 100%; background: linear-gradient(90deg, #f7931a, #f4b728); border-radius: 6px; }
-  .err-text { color: #f87171; font-size: 13px; }
-  .ok-text { color: #4ade80; font-size: 13px; }
-  ::placeholder { color: #4b5563; }
+  body.light {
+    --bg: oklch(0.97 0.006 90);
+    --surface: oklch(1 0 0);
+    --surface2: oklch(0.94 0.008 90);
+    --border: oklch(0.2 0.02 90 / 0.10);
+    --text: oklch(0.2 0.02 90);
+    --muted: oklch(0.45 0.015 90);
+    --faint: oklch(0.58 0.015 90);
+  }
+  * { box-sizing: border-box; }
+  .hidden { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+  h1, h2, h3, .font-display { font-family: 'Space Grotesk', sans-serif; }
+  ::selection { background: oklch(0.78 0.15 65 / 0.35); }
+  a { color: inherit; }
+  ::placeholder { color: var(--faint); }
 
-  /* institutional table */
-  .tbl { width: 100%; font-size: 13.5px; border-collapse: collapse; }
-  .tbl th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
-  .tbl td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #cdd2dc; vertical-align: middle; }
+  .field {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 11px 14px; color: var(--text); font-family: inherit; font-size: 14px; outline: none; width: 100%;
+  }
+  .field:focus { border-color: var(--accent); }
+  .btn-accent {
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px;
+    padding: 11px 20px; font-weight: 600; font-size: 14px; font-family: inherit; cursor: pointer; white-space: nowrap;
+  }
+  .btn-accent:hover { background: var(--accent-strong); }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 999px;
+    padding: 8px 16px; font-size: 13px; font-family: inherit; cursor: pointer;
+  }
+  .btn-ghost:hover { background: var(--surface2); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  label.check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+  label.check input { accent-color: var(--accent); width: 15px; height: 15px; }
+  .err-text { color: var(--err-text); font-size: 13px; }
+  .ok-text { color: var(--ok-text); font-size: 13px; }
+
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
+  .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: var(--faint); letter-spacing: .06em; margin-top: 6px; text-transform: uppercase; }
+
+  .tbl { width: 100%; font-size: 14px; border-collapse: collapse; }
+  .tbl th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 12px 20px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .tbl td { padding: 15px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .tbl tr:last-child td { border-bottom: none; }
-  .tbl tbody tr:hover td { background: rgba(255,255,255,0.015); }
+  .tbl tbody tr:hover td { background: rgba(255,255,255,0.02); }
   .tbl-wrap { overflow-x: auto; }
-  .pill { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 9999px; white-space: nowrap; }
-  .pill-instant { background: rgba(93,211,158,0.1); color: #5dd39e; }
-  .pill-confirmed { background: rgba(124,92,255,0.12); color: #a794ff; }
+  .pill { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill-instant { background: oklch(0.32 0.06 150 / 0.5); color: var(--ok-text); }
+  .pill-confirmed { background: oklch(0.32 0.08 280 / 0.5); color: oklch(0.78 0.14 280); }
+  .pill-ok { background: var(--ok-bg); color: var(--ok-text); }
+  .pill-err { background: var(--err-bg); color: var(--err-text); }
 
-  /* side rail */
-  .rail a { display: block; padding: 7px 12px; border-radius: 8px; font-size: 13.5px; color: #9aa3b2; transition: color .15s, background .15s; }
-  .rail a:hover { color: #fff; background: rgba(255,255,255,0.04); }
-  section[id] { scroll-margin-top: 90px; }
+  .rail-item { padding: 9px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; color: var(--muted); transition: background .12s, color .12s; }
+  .rail-item:hover { background: var(--surface2); color: var(--text); }
+  .rail-item.active { color: var(--text); background: var(--surface2); font-weight: 600; }
+
+  .view { display: none; flex-direction: column; gap: 20px; }
+  .view.active { display: flex; }
+
+  .nav-ctl {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 9999px; font-size: 13px; padding: 7px 14px; cursor: pointer; font-family: inherit;
+  }
+  .nav-ctl:hover { background: var(--border); }
+  select.nav-ctl { appearance: none; -webkit-appearance: none; padding-right: 26px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23999' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; }
+
+  .bar-row { display: grid; grid-template-columns: 130px 1fr 90px; gap: 12px; align-items: center; font-size: 13px; }
+  .bar-track { background: rgba(255,255,255,0.06); border-radius: 6px; height: 10px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 6px; }
 </style>
 </head>
-<body class="text-white">
+<body>
+<script>
+  try { if (localStorage.getItem('portal_theme') === 'light') document.body.classList.add('light'); } catch {}
+</script>
 
-<nav class="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 border-b border-white/5" style="background: rgba(6,7,9,0.85); backdrop-filter: blur(12px);">
-  <a href="/" class="flex items-end gap-2.5">
-    <svg width="22" height="26" viewBox="0 0 24 28" fill="none"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="#f4b728" stroke="#14100a" stroke-width="0.6"/></svg>
-    <span class="font-display text-lg leading-none" style="font-weight:600;">portal</span>
-    <span class="text-gray-600 text-sm leading-none">/ dashboard</span>
-  </a>
-  <div class="flex items-center gap-6 text-sm">
-    <a href="/docs.html" class="text-gray-400 hover:text-white transition-colors">Docs</a>
-    <button id="signOutBtn" class="hidden btn-ghost rounded-full px-4 py-1.5 text-sm">Sign out</button>
-  </div>
-</nav>
-
-<main class="max-w-6xl mx-auto px-4 sm:px-6 md:px-12 py-14">
+<div style="min-height:100vh; display:flex; flex-direction:column;">
 
   <!-- AUTH VIEW -->
-  <section id="authView">
-    <div class="max-w-sm mx-auto mt-10">
-      <h1 class="text-3xl font-medium mb-8 text-center">Creator <span class="serif-accent text-gold">dashboard</span></h1>
-      <div class="card p-8 text-center">
-        <p class="text-sm text-gray-400 mb-6">Sign in from your Zcash wallet. No password.</p>
-        <button id="walletSignIn" class="btn-gold rounded-full px-6 py-3 text-sm w-full">Sign in with Zcash</button>
-        <p id="authError" class="err-text hidden mt-4"></p>
-        <p class="text-xs text-gray-600 mt-5">Add your wallet address after the code in the memo. Same address, same account.</p>
+  <div id="authView" style="flex:1; display:flex; flex-direction:column; padding:24px;">
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:auto;">
+      <select id="langSel" class="nav-ctl" aria-label="Language">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="fr">FR</option>
+      </select>
+      <button id="themeToggle" class="nav-ctl" style="width:38px; height:34px; padding:0; display:flex; align-items:center; justify-content:center;" aria-label="Toggle light or dark mode">
+        <svg id="iconMoon" width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg id="iconSun" width="15" height="15" viewBox="0 0 24 24" fill="none" class="hidden"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+    <div style="max-width:380px; width:100%;">
+      <div style="display:flex; align-items:center; gap:9px; justify-content:center; margin-bottom:28px;">
+        <svg width="19" height="22" viewBox="0 0 24 28"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="var(--accent)"/></svg>
+        <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;">portal</span>
+      </div>
+      <div class="card" style="padding:32px; text-align:center;">
+        <p data-i18n="authIntro" style="font-size:14px; color:var(--muted); margin:0 0 22px;">Sign in from your Zcash wallet. No password.</p>
+        <button id="walletSignIn" data-i18n="signIn" class="btn-accent" style="width:100%;">Sign in with Zcash</button>
+        <p id="authError" class="err-text hidden" style="margin-top:14px;"></p>
+        <p data-i18n="authHint" style="font-size:12px; color:var(--faint); margin:18px 0 0;">Add your wallet address after the code in the memo. Same address, same account.</p>
       </div>
     </div>
-  </section>
+    </div>
+  </div>
 
   <!-- DASHBOARD VIEW -->
-  <section id="dashboardView" class="hidden">
-    <div class="flex gap-10">
+  <div id="dashboardView" class="hidden" style="flex-direction:column; min-height:100vh;">
 
-      <!-- SIDE RAIL -->
-      <aside class="hidden lg:block w-44 flex-shrink-0">
-        <nav class="rail sticky top-24 space-y-1">
-          <a href="#overview">Overview</a>
-          <a href="#paylinks">Paylinks</a>
-          <a href="#gates">Gates</a>
-          <a href="#developers">Developers</a>
-          <a href="#account">Account</a>
-        </nav>
-      </aside>
-
-      <!-- CONTENT -->
-      <div class="flex-1 min-w-0 space-y-14">
-
-        <!-- OVERVIEW -->
-        <section id="overview">
-          <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-medium">Overview</h1>
-            <span class="text-xs text-gray-600">All time · Zcash mainnet</span>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">ZEC received</div></div>
-            <div class="stat-card"><div class="stat-value" id="statPayments">0</div><div class="stat-label">Payments</div></div>
-            <div class="stat-card"><div class="stat-value" id="statGates">0</div><div class="stat-label">Gates</div></div>
-            <div class="stat-card"><div class="stat-value" id="statPaylinks">0</div><div class="stat-label">Paylinks</div></div>
-          </div>
-
-          <div class="card p-6">
-            <h2 class="text-sm font-medium mb-4 text-gray-300">Revenue by source</h2>
-            <div id="analyticsChart" class="space-y-3">
-              <p class="text-sm text-gray-500">No payments yet.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- PAYLINKS -->
-        <section id="paylinks">
-          <div class="flex items-center justify-between mb-1">
-            <h2 class="text-lg font-medium">Paylinks</h2>
-          </div>
-          <p class="text-xs text-gray-600 mb-5">Shareable payment requests. Links never expire.</p>
-
-          <div class="card tbl-wrap mb-4">
-            <table class="tbl">
-              <thead><tr><th>Label</th><th>Link</th><th>Amount</th><th>Payments</th><th></th></tr></thead>
-              <tbody id="paylinksList"></tbody>
-            </table>
-          </div>
-
-          <form id="paylinkForm" class="card p-5 flex flex-col sm:flex-row gap-2 sm:items-center">
-            <input class="field sm:max-w-[160px]" id="plAmount" placeholder="Amount (ZEC)">
-            <input class="field flex-1" id="plLabel" placeholder="Label">
-            <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm whitespace-nowrap">New paylink</button>
-          </form>
-          <p id="paylinkError" class="err-text hidden mt-2"></p>
-        </section>
-
-        <!-- GATES -->
-        <section id="gates">
-          <div class="flex items-center justify-between mb-1">
-            <h2 class="text-lg font-medium">Gates</h2>
-          </div>
-          <p class="text-xs text-gray-600 mb-5">Priced access tiers. A payment at or above the price unlocks a session.</p>
-
-          <div class="card tbl-wrap mb-4">
-            <table class="tbl">
-              <thead><tr><th>Label</th><th>Key</th><th>Price</th><th>Settlement</th><th></th></tr></thead>
-              <tbody id="gatesList"></tbody>
-            </table>
-          </div>
-
-          <form id="gateForm" class="card p-5 space-y-3">
-            <div class="grid sm:grid-cols-3 gap-2">
-              <input class="field" id="gateKey" placeholder="Key (e.g. vip)">
-              <input class="field" id="gateAmount" placeholder="Price (ZEC)">
-              <input class="field" id="gateLabel" placeholder="Label">
-            </div>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-              <label class="check"><input type="checkbox" id="gateConfirm"> Wait for a mined confirmation before unlocking</label>
-              <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm whitespace-nowrap">Add gate</button>
-            </div>
-            <p id="gateError" class="err-text hidden"></p>
-          </form>
-        </section>
-
-        <!-- DEVELOPERS -->
-        <section id="developers">
-          <h2 class="text-lg font-medium mb-1">Developers</h2>
-          <p class="text-xs text-gray-600 mb-5">Webhook notifications for your payments.</p>
-
-          <div class="card p-6">
-            <h3 class="text-sm font-medium mb-3 text-gray-300">Webhook endpoint</h3>
-            <p class="text-sm text-gray-500 mb-4">We send a signed POST when a payment is detected, and again when it confirms. Public https URLs only.</p>
-            <form id="webhookForm" class="flex flex-col sm:flex-row gap-2">
-              <input class="field flex-1" id="webhookUrl" placeholder="https://yourapp.com/hooks/portal">
-              <button type="submit" class="btn-gold rounded-full px-6 py-2.5 text-sm whitespace-nowrap">Save</button>
-            </form>
-            <p id="webhookMsg" class="text-sm mt-2 hidden"></p>
-            <p class="text-xs text-gray-600 mt-4">Verify the <code class="text-gold">x-portal-signature</code> header on every delivery. <a href="/docs.html#creators" class="text-gold hover:underline">How to verify</a></p>
-          </div>
-        </section>
-
-        <!-- ACCOUNT -->
-        <section id="account">
-          <h2 class="text-lg font-medium mb-1">Account</h2>
-          <p class="text-xs text-gray-600 mb-5">Your identity on this Portal instance.</p>
-
-          <div class="card p-6 space-y-6">
-            <div>
-              <div class="text-xs uppercase tracking-widest text-gray-500 mb-2">Display name</div>
-              <form id="profileForm" class="flex items-center gap-2 max-w-sm">
-                <input class="field" id="profileDisplayName" placeholder="Optional">
-                <button type="submit" class="btn-ghost rounded-full px-4 py-2 text-xs whitespace-nowrap">Save</button>
-              </form>
-            </div>
-            <div>
-              <div class="text-xs uppercase tracking-widest text-gray-500 mb-2">Receiving address</div>
-              <div class="flex items-center gap-3">
-                <span id="profileAddress" class="font-mono text-xs text-gray-400 truncate max-w-md">-</span>
-                <button id="copyAddress" class="text-gold text-xs whitespace-nowrap hover:underline">Copy</button>
-              </div>
-              <p class="text-xs text-gray-600 mt-2">Every payment to your Paylinks and Gates settles here.</p>
-            </div>
-          </div>
-        </section>
-
+    <div style="height:64px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 28px; border-bottom:1px solid var(--border);">
+      <div style="display:flex; align-items:center; gap:9px;">
+        <svg width="20" height="23" viewBox="0 0 24 28" style="flex:none;"><path d="M2 28V12A10 10 0 0 1 22 12V28H2Z" fill="var(--accent)"/></svg>
+        <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;letter-spacing:-0.01em;">portal</span>
+        <span style="color:var(--faint); font-size:14px;">/ <span id="breadcrumb">Overview</span></span>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <select id="langSelDash" class="nav-ctl" aria-label="Language">
+          <option value="en">EN</option>
+          <option value="es">ES</option>
+          <option value="fr">FR</option>
+        </select>
+        <button id="themeToggleDash" class="nav-ctl" style="width:38px; height:34px; padding:0; display:flex; align-items:center; justify-content:center;" aria-label="Toggle light or dark mode">
+          <svg id="iconMoonDash" width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg id="iconSunDash" width="15" height="15" viewBox="0 0 24 24" fill="none" class="hidden"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+        <a href="/docs" data-i18n="docsLink" style="color:var(--muted); font-size:14px; text-decoration:none;">Docs</a>
+        <button id="signOutBtn" data-i18n="signOut" class="btn-ghost">Sign out</button>
       </div>
     </div>
-  </section>
 
-</main>
+    <div style="display:flex; flex:1; min-height:0;">
+      <div style="width:210px; flex:none; padding:22px 14px; display:flex; flex-direction:column; gap:2px; border-right:1px solid var(--border);">
+        <div class="rail-item active" data-view="overview" data-i18n="navOverview">Overview</div>
+        <div class="rail-item" data-view="paylinks" data-i18n="navPaylinks">Paylinks</div>
+        <div class="rail-item" data-view="gates" data-i18n="navGates">Gates</div>
+        <div class="rail-item" data-view="developers" data-i18n="navDevelopers">Developers</div>
+        <div class="rail-item" data-view="account" data-i18n="navAccount">Account</div>
+      </div>
+
+      <div style="flex:1; overflow:auto; padding:40px 48px 64px;">
+        <div style="max-width:1080px; margin:0 auto;">
+
+          <!-- OVERVIEW -->
+          <div id="view-overview" class="view active">
+            <div style="display:flex; align-items:baseline; justify-content:space-between;">
+              <h1 data-i18n="navOverview" style="font-size:28px; font-weight:700; margin:0;">Overview</h1>
+              <span data-i18n="allTime" style="font-size:13px; color:var(--faint);">All time · Zcash mainnet</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+              <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label" data-i18n="statZec">ZEC received</div></div>
+              <div class="stat-card"><div class="stat-value" id="statPayments">0</div><div class="stat-label" data-i18n="statPayments">Payments</div></div>
+              <div class="stat-card"><div class="stat-value" id="statGates">0</div><div class="stat-label" data-i18n="navGates">Gates</div></div>
+              <div class="stat-card"><div class="stat-value" id="statPaylinks">0</div><div class="stat-label" data-i18n="navPaylinks">Paylinks</div></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1.3fr; gap:14px; align-items:stretch;">
+              <div class="card" style="padding:22px;">
+                <h3 data-i18n="revenueBySource" style="margin:0 0 18px; font-size:14px; font-weight:600;">Revenue by source</h3>
+                <div id="revenueDonutWrap" style="display:flex; align-items:center; gap:24px;">
+                  <p data-i18n="noPaymentsYet" style="font-size:13.5px; color:var(--faint); margin:0;">No payments yet.</p>
+                </div>
+              </div>
+
+              <div class="card" style="padding:22px;">
+                <h3 data-i18n="recentActivity" style="margin:0 0 14px; font-size:14px; font-weight:600;">Recent activity</h3>
+                <div id="recentActivity" style="display:flex; flex-direction:column;">
+                  <p data-i18n="noActivityYet" style="font-size:13.5px; color:var(--faint); margin:0;">No activity yet.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="padding:22px;">
+              <h3 data-i18n="last14Days" style="margin:0 0 4px; font-size:14px; font-weight:600;">Payments received, last 14 days</h3>
+              <div id="fourteenDayBars" style="display:flex; align-items:flex-end; gap:7px; height:110px; margin-top:20px;"></div>
+            </div>
+          </div>
+
+          <!-- PAYLINKS -->
+          <div id="view-paylinks" class="view">
+            <div>
+              <h1 data-i18n="navPaylinks" style="font-size:28px; font-weight:700; margin:0 0 4px;">Paylinks</h1>
+              <p data-i18n="paylinksSub" style="margin:0; color:var(--muted); font-size:14px;">Shareable payment requests. Links never expire.</p>
+            </div>
+
+            <div class="card tbl-wrap">
+              <table class="tbl">
+                <thead><tr><th data-i18n="colLabel">Label</th><th data-i18n="colLink">Link</th><th data-i18n="colAmount">Amount</th><th data-i18n="statPayments">Payments</th><th></th></tr></thead>
+                <tbody id="paylinksList"></tbody>
+              </table>
+            </div>
+
+            <form id="paylinkForm" class="card" style="padding:20px 22px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <input class="field" id="plAmount" data-i18n-ph="phAmount" placeholder="Amount (ZEC)" style="flex:1; min-width:140px;">
+              <input class="field" id="plLabel" data-i18n-ph="colLabel" placeholder="Label" style="flex:2; min-width:180px;">
+              <button type="submit" data-i18n="newPaylink" class="btn-accent">New paylink</button>
+            </form>
+            <p id="paylinkError" class="err-text hidden"></p>
+          </div>
+
+          <!-- GATES -->
+          <div id="view-gates" class="view">
+            <div>
+              <h1 data-i18n="navGates" style="font-size:28px; font-weight:700; margin:0 0 4px;">Gates</h1>
+              <p data-i18n="gatesSub" style="margin:0; color:var(--muted); font-size:14px;">Priced access tiers. A payment at or above the price unlocks a session.</p>
+            </div>
+
+            <div class="card tbl-wrap">
+              <table class="tbl">
+                <thead><tr><th data-i18n="colLabel">Label</th><th data-i18n="colKey">Key</th><th data-i18n="colPrice">Price</th><th data-i18n="colSettlement">Settlement</th><th></th></tr></thead>
+                <tbody id="gatesList"></tbody>
+              </table>
+            </div>
+
+            <form id="gateForm" class="card" style="padding:20px 22px; display:flex; flex-direction:column; gap:14px;">
+              <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <input class="field" id="gateKey" data-i18n-ph="phGateKey" placeholder="Key (e.g. vip)" style="flex:1; min-width:140px;">
+                <input class="field" id="gateAmount" data-i18n-ph="phPrice" placeholder="Price (ZEC)" style="flex:1; min-width:140px;">
+                <input class="field" id="gateLabel" data-i18n-ph="colLabel" placeholder="Label" style="flex:1; min-width:140px;">
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <label class="check"><input type="checkbox" id="gateConfirm"> <span data-i18n="waitConfirm">Wait for a mined confirmation before unlocking</span></label>
+                <button type="submit" data-i18n="addGate" class="btn-accent">Add gate</button>
+              </div>
+              <p id="gateError" class="err-text hidden"></p>
+            </form>
+          </div>
+
+          <!-- DEVELOPERS -->
+          <div id="view-developers" class="view">
+            <div>
+              <h1 data-i18n="navDevelopers" style="font-size:28px; font-weight:700; margin:0 0 4px;">Developers</h1>
+              <p data-i18n="devSub" style="margin:0; color:var(--muted); font-size:14px;">Webhook notifications for your payments.</p>
+            </div>
+
+            <div class="card" style="padding:22px; display:flex; flex-direction:column; gap:14px;">
+              <h3 data-i18n="webhookEndpoint" style="margin:0; font-size:14px; font-weight:600; color:var(--accent);">Webhook endpoint</h3>
+              <p data-i18n="webhookDesc" style="margin:0; font-size:13.5px; color:var(--muted); line-height:1.6;">We send a signed POST when a payment is detected, and again when it confirms. Public https URLs only.</p>
+              <form id="webhookForm" style="display:flex; gap:12px; flex-wrap:wrap;">
+                <input class="field" id="webhookUrl" placeholder="https://yourapp.com/hooks/portal" style="flex:1; min-width:220px; font-family:ui-monospace,monospace; font-size:13.5px;">
+                <button type="submit" data-i18n="save" class="btn-accent">Save</button>
+              </form>
+              <p id="webhookMsg" class="hidden" style="margin:0; font-size:13.5px;"></p>
+              <p style="margin:0; font-size:12px; color:var(--faint);"><span data-i18n="verifySig">Verify the</span> <span style="font-family:ui-monospace,monospace; color:var(--muted);">x-portal-signature</span> <span data-i18n="onDelivery">header on every delivery.</span> <a href="/docs#creators" data-i18n="howToVerify" style="color:var(--accent); text-decoration:none;">How to verify</a></p>
+            </div>
+
+            <div class="card tbl-wrap">
+              <div data-i18n="recentDeliveries" style="padding:16px 20px 0; font-size:14px; font-weight:600;">Recent deliveries</div>
+              <table class="tbl">
+                <thead><tr><th data-i18n="colEvent">Event</th><th data-i18n="colStatus">Status</th><th data-i18n="colDelivered">Delivered</th></tr></thead>
+                <tbody id="deliveriesList"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ACCOUNT -->
+          <div id="view-account" class="view">
+            <div>
+              <h1 data-i18n="navAccount" style="font-size:28px; font-weight:700; margin:0 0 4px;">Account</h1>
+              <p data-i18n="accountSub" style="margin:0; color:var(--muted); font-size:14px;">Your identity on this Portal instance.</p>
+            </div>
+
+            <div class="card" style="padding:22px; display:flex; flex-direction:column; gap:22px;">
+              <div>
+                <div data-i18n="displayName" style="font-size:11px; letter-spacing:.06em; color:var(--faint); margin-bottom:8px; text-transform:uppercase;">Display name</div>
+                <form id="profileForm" style="display:flex; gap:12px; max-width:380px;">
+                  <input class="field" id="profileDisplayName" data-i18n-ph="optional" placeholder="Optional">
+                  <button type="submit" data-i18n="save" class="btn-ghost" style="padding:11px 20px;">Save</button>
+                </form>
+              </div>
+              <div style="border-top:1px solid var(--border); padding-top:22px;">
+                <div data-i18n="receivingAddress" style="font-size:11px; letter-spacing:.06em; color:var(--faint); margin-bottom:8px; text-transform:uppercase;">Receiving address</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <span id="profileAddress" style="font-family:ui-monospace,monospace; font-size:13px; word-break:break-all;">-</span>
+                  <button id="copyAddress" data-i18n="copy" style="color:var(--accent); font-size:12.5px; background:none; border:none; cursor:pointer; font-family:inherit; white-space:nowrap;">Copy</button>
+                </div>
+                <p data-i18n="settlesHere" style="margin:10px 0 0; font-size:12.5px; color:var(--faint);">Every payment to your Paylinks and Gates settles here.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <script src="/sdk/portal.js?v=3"></script>
 <script>
 (function () {
   const TOKEN_KEY = 'portal_creator_token';
+  const REVENUE_HUES = [65, 45, 280, 150, 25, 200];
 
   function token() { return localStorage.getItem(TOKEN_KEY); }
   function setToken(t) { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }
@@ -235,16 +338,146 @@
 
   function zecFromZats(z) { return (Number(z || 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '.0'); }
   function short(addr) { return addr ? `${addr.slice(0, 14)}…${addr.slice(-6)}` : ''; }
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function relTime(ts) {
+    const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (s < 60) return t('justNow');
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}${t('mAgo')}`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}${t('hAgo')}`;
+    const d = Math.floor(h / 24);
+    return `${d}${t('dAgo')}`;
+  }
+
+  // ---- language ----
+  const I18N = {
+    en: {
+      navOverview: 'Overview', navPaylinks: 'Paylinks', navGates: 'Gates', navDevelopers: 'Developers', navAccount: 'Account',
+      docsLink: 'Docs', signOut: 'Sign out', authIntro: 'Sign in from your Zcash wallet. No password.', signIn: 'Sign in with Zcash',
+      authHint: 'Add your wallet address after the code in the memo. Same address, same account.',
+      allTime: 'All time · Zcash mainnet', statZec: 'ZEC received', statPayments: 'Payments',
+      revenueBySource: 'Revenue by source', recentActivity: 'Recent activity', last14Days: 'Payments received, last 14 days',
+      noPaymentsYet: 'No payments yet.', noActivityYet: 'No activity yet.', noGatesYet: 'No gates yet.', noPaylinksYet: 'No paylinks yet.',
+      paylinksSub: 'Shareable payment requests. Links never expire.', gatesSub: 'Priced access tiers. A payment at or above the price unlocks a session.',
+      devSub: 'Webhook notifications for your payments.', accountSub: 'Your identity on this Portal instance.',
+      colLabel: 'Label', colLink: 'Link', colAmount: 'Amount', colKey: 'Key', colPrice: 'Price', colSettlement: 'Settlement',
+      colEvent: 'Event', colStatus: 'Status', colDelivered: 'Delivered',
+      phAmount: 'Amount (ZEC)', phGateKey: 'Key (e.g. vip)', phPrice: 'Price (ZEC)', optional: 'Optional',
+      newPaylink: 'New paylink', addGate: 'Add gate', waitConfirm: 'Wait for a mined confirmation before unlocking',
+      webhookEndpoint: 'Webhook endpoint', webhookDesc: 'We send a signed POST when a payment is detected, and again when it confirms. Public https URLs only.',
+      save: 'Save', verifySig: 'Verify the', onDelivery: 'header on every delivery.', howToVerify: 'How to verify',
+      recentDeliveries: 'Recent deliveries', noDeliveriesYet: 'No deliveries yet. They will appear here once a payment is detected and your webhook URL is set.',
+      displayName: 'Display name', receivingAddress: 'Receiving address', copy: 'Copy', copied: 'Copied!',
+      settlesHere: 'Every payment to your Paylinks and Gates settles here.', copyLink: 'Copy link', delete: 'Delete',
+      instant: 'Instant', confirmed: 'Confirmed', received: 'Received', delivered: 'Delivered', failed: 'Failed',
+      justNow: 'just now', mAgo: 'm ago', hAgo: 'h ago', dAgo: 'd ago',
+    },
+    es: {
+      navOverview: 'Resumen', navPaylinks: 'Enlaces de pago', navGates: 'Puertas', navDevelopers: 'Desarrolladores', navAccount: 'Cuenta',
+      docsLink: 'Documentación', signOut: 'Cerrar sesión', authIntro: 'Inicia sesión desde tu billetera Zcash. Sin contraseña.', signIn: 'Iniciar sesión con Zcash',
+      authHint: 'Agrega tu dirección de billetera después del código en el memo. Misma dirección, misma cuenta.',
+      allTime: 'Todo el tiempo · Red principal de Zcash', statZec: 'ZEC recibidos', statPayments: 'Pagos',
+      revenueBySource: 'Ingresos por fuente', recentActivity: 'Actividad reciente', last14Days: 'Pagos recibidos, últimos 14 días',
+      noPaymentsYet: 'Aún no hay pagos.', noActivityYet: 'Aún no hay actividad.', noGatesYet: 'Aún no hay puertas.', noPaylinksYet: 'Aún no hay enlaces de pago.',
+      paylinksSub: 'Solicitudes de pago para compartir. Los enlaces nunca caducan.', gatesSub: 'Niveles de acceso con precio. Un pago igual o mayor al precio desbloquea una sesión.',
+      devSub: 'Notificaciones webhook para tus pagos.', accountSub: 'Tu identidad en esta instancia de Portal.',
+      colLabel: 'Etiqueta', colLink: 'Enlace', colAmount: 'Monto', colKey: 'Clave', colPrice: 'Precio', colSettlement: 'Liquidación',
+      colEvent: 'Evento', colStatus: 'Estado', colDelivered: 'Entregado',
+      phAmount: 'Monto (ZEC)', phGateKey: 'Clave (ej. vip)', phPrice: 'Precio (ZEC)', optional: 'Opcional',
+      newPaylink: 'Nuevo enlace de pago', addGate: 'Agregar puerta', waitConfirm: 'Esperar una confirmación minada antes de desbloquear',
+      webhookEndpoint: 'Endpoint del webhook', webhookDesc: 'Enviamos un POST firmado cuando se detecta un pago, y de nuevo cuando se confirma. Solo URLs https públicas.',
+      save: 'Guardar', verifySig: 'Verifica el encabezado', onDelivery: 'en cada entrega.', howToVerify: 'Cómo verificar',
+      recentDeliveries: 'Entregas recientes', noDeliveriesYet: 'Aún no hay entregas. Aparecerán aquí una vez que se detecte un pago y tengas configurada tu URL de webhook.',
+      displayName: 'Nombre visible', receivingAddress: 'Dirección de recepción', copy: 'Copiar', copied: '¡Copiado!',
+      settlesHere: 'Todo pago a tus Enlaces de pago y Puertas se liquida aquí.', copyLink: 'Copiar enlace', delete: 'Eliminar',
+      instant: 'Instantáneo', confirmed: 'Confirmado', received: 'Recibido', delivered: 'Entregado', failed: 'Fallido',
+      justNow: 'ahora mismo', mAgo: 'm', hAgo: 'h', dAgo: 'd',
+    },
+    fr: {
+      navOverview: 'Aperçu', navPaylinks: 'Liens de paiement', navGates: 'Portes', navDevelopers: 'Développeurs', navAccount: 'Compte',
+      docsLink: 'Documentation', signOut: 'Se déconnecter', authIntro: 'Connectez-vous depuis votre portefeuille Zcash. Sans mot de passe.', signIn: 'Se connecter avec Zcash',
+      authHint: 'Ajoutez votre adresse de portefeuille après le code dans le mémo. Même adresse, même compte.',
+      allTime: 'Depuis toujours · Réseau principal Zcash', statZec: 'ZEC reçus', statPayments: 'Paiements',
+      revenueBySource: 'Revenus par source', recentActivity: 'Activité récente', last14Days: 'Paiements reçus, 14 derniers jours',
+      noPaymentsYet: "Aucun paiement pour l'instant.", noActivityYet: "Aucune activité pour l'instant.", noGatesYet: "Aucune porte pour l'instant.", noPaylinksYet: "Aucun lien de paiement pour l'instant.",
+      paylinksSub: "Demandes de paiement partageables. Les liens n'expirent jamais.", gatesSub: "Niveaux d'accès payants. Un paiement égal ou supérieur au prix débloque une session.",
+      devSub: 'Notifications webhook pour vos paiements.', accountSub: 'Votre identité sur cette instance de Portal.',
+      colLabel: 'Intitulé', colLink: 'Lien', colAmount: 'Montant', colKey: 'Clé', colPrice: 'Prix', colSettlement: 'Règlement',
+      colEvent: 'Événement', colStatus: 'Statut', colDelivered: 'Livré',
+      phAmount: 'Montant (ZEC)', phGateKey: 'Clé (ex. vip)', phPrice: 'Prix (ZEC)', optional: 'Optionnel',
+      newPaylink: 'Nouveau lien de paiement', addGate: 'Ajouter une porte', waitConfirm: 'Attendre une confirmation minée avant de débloquer',
+      webhookEndpoint: 'Point de terminaison webhook', webhookDesc: "Nous envoyons un POST signé quand un paiement est détecté, puis de nouveau quand il est confirmé. URLs https publiques uniquement.",
+      save: 'Enregistrer', verifySig: "Vérifiez l'en-tête", onDelivery: 'à chaque livraison.', howToVerify: 'Comment vérifier',
+      recentDeliveries: 'Livraisons récentes', noDeliveriesYet: "Aucune livraison pour l'instant. Elles apparaîtront ici une fois qu'un paiement sera détecté et votre URL de webhook configurée.",
+      displayName: "Nom d'affichage", receivingAddress: 'Adresse de réception', copy: 'Copier', copied: 'Copié !',
+      settlesHere: 'Chaque paiement vers vos liens de paiement et portes se règle ici.', copyLink: 'Copier le lien', delete: 'Supprimer',
+      instant: 'Instantané', confirmed: 'Confirmé', received: 'Reçu', delivered: 'Livré', failed: 'Échoué',
+      justNow: "à l'instant", mAgo: 'min', hAgo: 'h', dAgo: 'j',
+    },
+  };
+  let lang = 'en';
+  try { lang = localStorage.getItem('portal_lang') || 'en'; } catch {}
+  if (!I18N[lang]) lang = 'en';
+  function t(key) { return I18N[lang][key] ?? key; }
+  function applyLang() {
+    document.getElementById('langSel').value = lang;
+    document.getElementById('langSelDash').value = lang;
+    document.querySelectorAll('[data-i18n]').forEach((el) => { if (I18N[lang][el.dataset.i18n]) el.textContent = I18N[lang][el.dataset.i18n]; });
+    document.querySelectorAll('[data-i18n-ph]').forEach((el) => { if (I18N[lang][el.dataset.i18nPh]) el.placeholder = I18N[lang][el.dataset.i18nPh]; });
+    const active = document.querySelector('.rail-item.active');
+    if (active) document.getElementById('breadcrumb').textContent = t('nav' + active.dataset.view[0].toUpperCase() + active.dataset.view.slice(1));
+  }
+  function onLangChange(v) {
+    lang = v;
+    try { localStorage.setItem('portal_lang', lang); } catch {}
+    applyLang();
+    if (token()) loadDashboard();
+  }
+  document.getElementById('langSel').addEventListener('change', (e) => onLangChange(e.target.value));
+  document.getElementById('langSelDash').addEventListener('change', (e) => onLangChange(e.target.value));
+  applyLang();
+
+  // ---- light / dark toggle (auth view + dashboard view controls, kept in sync) ----
+  function applyThemeIcons() {
+    const light = document.body.classList.contains('light');
+    ['iconSun', 'iconSunDash'].forEach((id) => document.getElementById(id).classList.toggle('hidden', !light));
+    ['iconMoon', 'iconMoonDash'].forEach((id) => document.getElementById(id).classList.toggle('hidden', light));
+  }
+  function toggleTheme() {
+    document.body.classList.toggle('light');
+    try { localStorage.setItem('portal_theme', document.body.classList.contains('light') ? 'light' : 'dark'); } catch {}
+    applyThemeIcons();
+  }
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  document.getElementById('themeToggleDash').addEventListener('click', toggleTheme);
+  applyThemeIcons();
 
   function showAuth() {
     document.getElementById('authView').classList.remove('hidden');
+    document.getElementById('authView').style.display = 'flex';
     document.getElementById('dashboardView').classList.add('hidden');
-    document.getElementById('signOutBtn').classList.add('hidden');
+    document.getElementById('dashboardView').style.display = 'none';
   }
   function showDashboard() {
     document.getElementById('authView').classList.add('hidden');
+    document.getElementById('authView').style.display = 'none';
     document.getElementById('dashboardView').classList.remove('hidden');
-    document.getElementById('signOutBtn').classList.remove('hidden');
+    document.getElementById('dashboardView').style.display = 'flex';
+  }
+
+  // ---- sidebar view switching ----
+  const VIEW_KEYS = { overview: 'navOverview', paylinks: 'navPaylinks', gates: 'navGates', developers: 'navDevelopers', account: 'navAccount' };
+  document.querySelectorAll('.rail-item').forEach((el) => {
+    el.addEventListener('click', () => selectView(el.dataset.view));
+  });
+  function selectView(v) {
+    document.querySelectorAll('.rail-item').forEach((el) => el.classList.toggle('active', el.dataset.view === v));
+    document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.id === `view-${v}`));
+    document.getElementById('breadcrumb').textContent = t(VIEW_KEYS[v]);
+    if (v === 'developers') loadDeliveries();
   }
 
   // ---- wallet sign-in via the same Portal.login primitive end users get ----
@@ -282,9 +515,8 @@
     const addr = document.getElementById('profileAddress').dataset.full || '';
     try { await navigator.clipboard.writeText(addr); } catch {}
     const btn = document.getElementById('copyAddress');
-    const original = btn.textContent;
-    btn.textContent = 'Copied';
-    setTimeout(() => { btn.textContent = original; }, 1500);
+    btn.textContent = t('copied');
+    setTimeout(() => { btn.textContent = t('copy'); }, 1500);
   });
 
   // ---- dashboard data ----
@@ -302,7 +534,9 @@
     renderGates(data.gates);
     renderPaylinks(data.paylinks);
     renderStats(data.gates, data.paylinks);
-    renderChart(data.gates, data.paylinks);
+    renderRevenueDonut(data.paylinks);
+    renderRecentActivity(data.paylinks);
+    renderFourteenDayBars(data.paylinks);
     document.getElementById('webhookUrl').value = data.creator.webhookUrl || '';
   }
 
@@ -322,45 +556,106 @@
     document.getElementById('statPaylinks').textContent = paylinks.length;
   }
 
-  function renderChart(gates, paylinks) {
-    const el = document.getElementById('analyticsChart');
-    const sources = paylinks
-      .filter((l) => l.totalZats > 0)
-      .map((l) => ({ label: l.label, zats: l.totalZats }));
-    if (sources.length === 0) {
-      el.innerHTML = '<p class="text-sm text-gray-500">No payments yet.</p>';
+  // ---- overview: revenue by source (real per-paylink totals, top 5 + Other) ----
+  function renderRevenueDonut(paylinks) {
+    const wrap = document.getElementById('revenueDonutWrap');
+    const sorted = paylinks.filter((l) => l.totalZats > 0).sort((a, b) => b.totalZats - a.totalZats);
+    if (sorted.length === 0) {
+      wrap.innerHTML = `<p style="font-size:13.5px;color:var(--faint);margin:0;">${t('noPaymentsYet')}</p>`;
       return;
     }
-    const max = Math.max(...sources.map((s) => s.zats));
-    el.innerHTML = sources.map((s) => `
-      <div class="bar-row">
-        <span class="text-gray-400 truncate">${escapeHtml(s.label)}</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, (s.zats / max) * 100)}%"></div></div>
-        <span class="text-gray-300 font-mono text-xs text-right">${zecFromZats(s.zats)} ZEC</span>
+    const top = sorted.slice(0, 5);
+    const rest = sorted.slice(5).reduce((s, l) => s + l.totalZats, 0);
+    const segments = top.map((l, i) => ({ label: l.label, zats: l.totalZats, hue: REVENUE_HUES[i % REVENUE_HUES.length] }));
+    if (rest > 0) segments.push({ label: 'Other', zats: rest, hue: REVENUE_HUES[5] });
+
+    const total = segments.reduce((s, x) => s + x.zats, 0);
+    let acc = 0;
+    const stops = segments.map((s) => {
+      const pct = (s.zats / total) * 100;
+      const start = acc; acc += pct;
+      return `oklch(0.72 0.14 ${s.hue}) ${start.toFixed(2)}% ${acc.toFixed(2)}%`;
+    }).join(', ');
+
+    wrap.innerHTML = `
+      <div style="width:112px;height:112px;border-radius:50%;flex:none;position:relative;background:conic-gradient(${stops});">
+        <div style="position:absolute;inset:13px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;">${zecFromZats(total)}</span>
+          <span style="font-size:9px;color:var(--faint);letter-spacing:.04em;">ZEC</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:11px;flex:1;min-width:0;">
+        ${segments.map((s) => `
+          <div style="display:flex;align-items:center;gap:9px;font-size:13px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:oklch(0.72 0.14 ${s.hue});flex:none;"></span>
+            <span style="flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(s.label)}</span>
+            <span style="color:var(--faint);font-size:12px;">${((s.zats / total) * 100).toFixed(0)}%</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // ---- overview: recent activity (flattened real payments across all paylinks) ----
+  function renderRecentActivity(paylinks) {
+    const el = document.getElementById('recentActivity');
+    const events = [];
+    for (const l of paylinks) {
+      for (const p of (l.payments || [])) events.push({ label: l.label, valueZats: p.valueZats, at: p.at });
+    }
+    events.sort((a, b) => b.at - a.at);
+    const recent = events.slice(0, 8);
+    if (recent.length === 0) {
+      el.innerHTML = `<p style="font-size:13.5px;color:var(--faint);margin:0;">${t('noActivityYet')}</p>`;
+      return;
+    }
+    el.innerHTML = recent.map((e) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:13.5px;">${escapeHtml(e.label)}</div>
+          <div style="font-size:11.5px;color:var(--faint);margin-top:2px;">${relTime(e.at)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13.5px;font-variant-numeric:tabular-nums;">${zecFromZats(e.valueZats)} ZEC</span>
+          <span class="pill pill-instant">${t('received')}</span>
+        </div>
       </div>
     `).join('');
   }
 
-  function escapeHtml(s) {
-    return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // ---- overview: 14-day bar chart (real payments bucketed by day) ----
+  function renderFourteenDayBars(paylinks) {
+    const el = document.getElementById('fourteenDayBars');
+    const days = 14;
+    const buckets = new Array(days).fill(0);
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    for (const l of paylinks) {
+      for (const p of (l.payments || [])) {
+        const diffDays = Math.floor((todayStart - new Date(p.at).setHours(0, 0, 0, 0)) / 86400000);
+        if (diffDays >= 0 && diffDays < days) buckets[days - 1 - diffDays] += (p.valueZats || 0);
+      }
+    }
+    const max = Math.max(...buckets, 1);
+    el.innerHTML = buckets.map((v) => `<div style="flex:1;height:${Math.max(2, (v / max) * 100)}%;background:var(--accent);border-radius:3px 3px 0 0;opacity:.88;"></div>`).join('');
   }
 
   function renderGates(gates) {
     const el = document.getElementById('gatesList');
     const keys = Object.keys(gates);
     if (keys.length === 0) {
-      el.innerHTML = '<tr><td colspan="5" class="text-gray-500">No gates yet.</td></tr>';
+      el.innerHTML = `<tr><td colspan="5" style="color:var(--faint);">${t('noGatesYet')}</td></tr>`;
       return;
     }
     el.innerHTML = keys.map((key) => {
       const g = gates[key];
       return `
         <tr>
-          <td class="font-medium text-white">${escapeHtml(g.label)}</td>
-          <td class="font-mono text-xs text-gray-500">${escapeHtml(key)}</td>
-          <td class="whitespace-nowrap">${escapeHtml(g.amount)} ZEC</td>
-          <td>${g.requireConfirmation ? '<span class="pill pill-confirmed">Confirmed</span>' : '<span class="pill pill-instant">Instant</span>'}</td>
-          <td class="text-right"><button data-key="${escapeHtml(key)}" class="delete-gate text-xs text-gray-500 hover:text-red-400">Delete</button></td>
+          <td style="font-weight:500;">${escapeHtml(g.label)}</td>
+          <td style="font-family:ui-monospace,monospace;font-size:12.5px;color:var(--muted);">${escapeHtml(key)}</td>
+          <td style="white-space:nowrap;">${escapeHtml(g.amount)} ZEC</td>
+          <td>${g.requireConfirmation ? `<span class="pill pill-confirmed">${t('confirmed')}</span>` : `<span class="pill pill-instant">${t('instant')}</span>`}</td>
+          <td style="text-align:right;"><button data-key="${escapeHtml(key)}" class="delete-gate" style="background:none;border:none;font-size:12px;color:var(--faint);cursor:pointer;font-family:inherit;">${t('delete')}</button></td>
         </tr>`;
     }).join('');
     el.querySelectorAll('.delete-gate').forEach((btn) => {
@@ -373,25 +668,41 @@
   function renderPaylinks(paylinks) {
     const el = document.getElementById('paylinksList');
     if (paylinks.length === 0) {
-      el.innerHTML = '<tr><td colspan="5" class="text-gray-500">No paylinks yet.</td></tr>';
+      el.innerHTML = `<tr><td colspan="5" style="color:var(--faint);">${t('noPaylinksYet')}</td></tr>`;
       return;
     }
     el.innerHTML = paylinks.map((l) => `
       <tr>
-        <td class="font-medium text-white">${escapeHtml(l.label)}</td>
-        <td><a href="/pay/${escapeHtml(l.slug)}" target="_blank" class="text-gold text-xs font-mono hover:underline">/pay/${escapeHtml(l.slug)}</a></td>
-        <td class="whitespace-nowrap">${escapeHtml(l.amount)} ZEC</td>
-        <td>${l.paymentCount}</td>
-        <td class="text-right"><button data-link="${location.origin}/pay/${escapeHtml(l.slug)}" class="copy-link text-xs text-gray-500 hover:text-white">Copy link</button></td>
+        <td style="font-weight:500;">${escapeHtml(l.label)}</td>
+        <td><a href="/pay/${escapeHtml(l.slug)}" target="_blank" style="color:var(--accent);font-size:12.5px;font-family:ui-monospace,monospace;text-decoration:none;">/pay/${escapeHtml(l.slug)}</a></td>
+        <td style="white-space:nowrap;">${escapeHtml(l.amount)} ZEC</td>
+        <td style="color:var(--muted);">${l.paymentCount}</td>
+        <td style="text-align:right;"><button data-link="${location.origin}/pay/${escapeHtml(l.slug)}" class="copy-link" style="background:none;border:none;font-size:12.5px;color:var(--accent);cursor:pointer;font-family:inherit;">${t('copyLink')}</button></td>
       </tr>`).join('');
     el.querySelectorAll('.copy-link').forEach((btn) => {
       btn.addEventListener('click', async () => {
         try { await navigator.clipboard.writeText(btn.dataset.link); } catch {}
-        const original = btn.textContent;
-        btn.textContent = 'Copied';
-        setTimeout(() => { btn.textContent = original; }, 1500);
+        btn.textContent = t('copied');
+        setTimeout(() => { btn.textContent = t('copyLink'); }, 1500);
       });
     });
+  }
+
+  // ---- developers: real webhook delivery log ----
+  async function loadDeliveries() {
+    const el = document.getElementById('deliveriesList');
+    let data;
+    try { data = await api('/creators/me/webhooks/deliveries'); } catch { return; }
+    if (!data.deliveries || data.deliveries.length === 0) {
+      el.innerHTML = `<tr><td colspan="3" style="color:var(--faint);">${t('noDeliveriesYet')}</td></tr>`;
+      return;
+    }
+    el.innerHTML = data.deliveries.map((d) => `
+      <tr>
+        <td style="font-family:ui-monospace,monospace;">${escapeHtml(d.event)}</td>
+        <td><span class="pill ${d.status === 'delivered' ? 'pill-ok' : 'pill-err'}">${d.status === 'delivered' ? t('delivered') : t('failed')}</span></td>
+        <td style="color:var(--muted);">${relTime(d.at)}</td>
+      </tr>`).join('');
   }
 
   // ---- create gate ----
@@ -442,10 +753,12 @@
     try {
       await api('/creators/me/webhook', { method: 'PATCH', body: JSON.stringify({ url }) });
       msg.textContent = 'Saved.';
-      msg.className = 'ok-text text-sm mt-2';
+      msg.className = 'ok-text';
+      msg.classList.remove('hidden');
     } catch (ex) {
       msg.textContent = ex.message;
-      msg.className = 'err-text text-sm mt-2';
+      msg.className = 'err-text';
+      msg.classList.remove('hidden');
     }
   });
 

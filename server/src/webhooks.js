@@ -4,6 +4,19 @@ import net from 'node:net';
 import { getCreator } from './creators.js';
 
 const MAX_ATTEMPTS = 3;
+const MAX_LOG_PER_CREATOR = 20;
+const deliveryLog = new Map(); // creatorId -> [{ event, status, at }], newest first
+
+function recordDelivery(creatorId, event, status) {
+  const log = deliveryLog.get(creatorId) ?? [];
+  log.unshift({ event, status, at: Date.now() });
+  if (log.length > MAX_LOG_PER_CREATOR) log.length = MAX_LOG_PER_CREATOR;
+  deliveryLog.set(creatorId, log);
+}
+
+export function getDeliveries(creatorId) {
+  return deliveryLog.get(creatorId) ?? [];
+}
 
 function sign(secret, body) {
   return crypto.createHmac('sha256', secret).update(body).digest('hex');
@@ -69,6 +82,7 @@ export function fireWebhook(creatorId, event) {
     for (let i = 0; i < MAX_ATTEMPTS; i++) {
       try {
         await attempt(creator.webhookUrl, body, creator.webhookSecret);
+        recordDelivery(creatorId, event.type, 'delivered');
         return;
       } catch (err) {
         console.error(`[webhook] ${creatorId} attempt ${i + 1}/${MAX_ATTEMPTS} failed: ${err.message}`);
@@ -76,5 +90,6 @@ export function fireWebhook(creatorId, event) {
       }
     }
     console.error(`[webhook] ${creatorId} gave up after ${MAX_ATTEMPTS} attempts`);
+    recordDelivery(creatorId, event.type, 'failed');
   })();
 }
